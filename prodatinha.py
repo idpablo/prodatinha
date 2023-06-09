@@ -82,6 +82,8 @@ bot.config = config
 # Diretório do projeto Java
 diretorio_projeto = "C:/prodata/sig/"
 
+teste   
+
 @bot.event
 async def on_ready():
     bot.logger.info(f"\nConectado com {bot.user.name}!")
