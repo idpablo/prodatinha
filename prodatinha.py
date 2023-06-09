@@ -199,19 +199,15 @@ class ResultadoRegex:
 async def regex(texto):
 
     try:
-        # Extrair os argumentos entre parênteses
         args_match = re.search(r"args='(.*?)'", texto)
         args = args_match.group(1) if args_match else ""
 
-        # Extrair o valor de returncode
         returncode_match = re.search(r"returncode=(\d+)", texto)
         returncode = int(returncode_match.group(1)) if returncode_match else 0
 
-        # Extrair o valor de stdout
         stdout_match = re.search(r"stdout=b\"(.*?)\"", texto)
         stdout = stdout_match.group(1) if stdout_match else ""
 
-        # Extrair o valor de stderr
         stderr_match = re.search(r"stderr=b\"(.*?)\"", texto)
         stderr = stderr_match.group(1) if stderr_match else ""
 
