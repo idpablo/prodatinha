@@ -42,7 +42,7 @@ def setup_logger(logger_name, log_file):
     # File handler
     file_handler = logging.FileHandler(filename=log_file, encoding="utf-8", mode="w")
     file_handler_formatter = logging.Formatter(
-        "[{asctime}] [{levelname:<4}] {name}: {message}", "%d-%m-%Y %H:%M:%S", style="{"
+        "[{asctime}] [{levelname:<8}] {name}: {message}", "%d-%m-%Y %H:%M:%S", style="{"
     )
     file_handler.setFormatter(file_handler_formatter)
     logger.addHandler(file_handler)
