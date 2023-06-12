@@ -1,0 +1,21 @@
+meu_processamento/
+    ├── main.py
+    ├── config/
+    │   ├── config.py
+    │   └── config.json
+    ├── util/
+    │   ├── helper.py
+    │   └── logger.py
+    ├── processamento/
+    │   ├── etapa1.py
+    │   ├── etapa2.py
+    │   └── etapa3.py
+    └── dados/
+        ├── input/
+        │   ├── arquivo1.txt
+        │   ├── arquivo2.csv
+        │   └── ...
+        └── output/
+            ├── resultado1.txt
+            ├── resultado2.csv
+            └── ...

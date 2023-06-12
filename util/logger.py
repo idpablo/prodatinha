@@ -22,12 +22,12 @@ class LoggingFormatter(logging.Formatter):
 
     def format(self, record):
         log_color = self.COLORS[record.levelno]
-        format = "(black){asctime}(reset) (levelcolor){levelname:<8}(reset) (green){name}(reset) {message}"
+        format = "(black){asctime}(reset) (levelcolor){levelname:<0}(reset) (green){name}(reset) {message}"
         format = format.replace("(black)", self.black + self.bold)
         format = format.replace("(reset)", self.reset)
         format = format.replace("(levelcolor)", log_color)
         format = format.replace("(green)", self.green + self.bold)
-        formatter = logging.Formatter(format, "%Y-%m-%d %H:%M:%S", style="{")
+        formatter = logging.Formatter(format, "%d-%m-%Y %H:%M:%S", style="{")
         return formatter.format(record)
 
 def setup_logger(logger_name, log_file):
@@ -40,9 +40,9 @@ def setup_logger(logger_name, log_file):
     logger.addHandler(console_handler)
 
     # File handler
-    file_handler = logging.FileHandler(filename=log_file, encoding="utf-8", mode="w")
+    file_handler = logging.FileHandler(filename=log_file, encoding="utf-8", mode="a")
     file_handler_formatter = logging.Formatter(
-        "[{asctime}] [{levelname:<8}] {name}: {message}", "%d-%m-%Y %H:%M:%S", style="{"
+        "[{asctime}] [{levelname:<0}] {name}: {message}", "%d-%m-%Y %H:%M:%S", style="{"
     )
     file_handler.setFormatter(file_handler_formatter)
     logger.addHandler(file_handler)

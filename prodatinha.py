@@ -1,26 +1,34 @@
 import subprocess
 import platform
+import threading
+import inspect
 import random
-import json
-import sys
+#import json
+#import sys
 import os
 
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot, Context
 
-from projeto import atualizar_projeto
-from traduzir import traduzir_texto
-from logger import setup_logger
-from regex import regex
+from resource.projeto import gerar_versao
+from util.logger import setup_logger
+from config.config import load_config
+from util.regex import regex_gradle
+from util.regex import regex_build
+from resource.apm import monitorar_recursos
 
-if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
+""" if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
-        config = json.load(file)
+        config = json.load(file) """
 
+#Inicialiaando bot com condigurações padrão
 intents = discord.Intents.all()
+
+bot = ()
+config = load_config(bot)
 
 bot = Bot(
     command_prefix=commands.when_mentioned_or(config["prefix"]),
@@ -42,6 +50,7 @@ diretorio_sig = "C:/prodata/sig/sig"
 
 @bot.event
 async def on_ready():
+    
     bot.logger.info(f"Conectado com {bot.user.name}!")
     bot.logger.info(f"Versão API discord.py: {discord.__version__}")
     bot.logger.info(f"Versão Python: {platform.python_version()}")
@@ -58,11 +67,32 @@ async def status_task() -> None:
     """
     Definindo status do bot.
     """
-    statuses = ["Os outros bots.", "Paciência!", "Com humanos!"]
-    await bot.change_presence(activity=discord.Game(random.choice(statuses)))
+    try:
+        funcao_atual = inspect.currentframe().f_code.co_name
+
+        dados = monitorar_recursos(bot)
+        
+        if dados is not None:
+            bot.logger.info(f'{funcao_atual} - Status do bot e processamentos:')
+            bot.logger.info(f"USO RAM: {dados[-1].uso_ram_mb} MB")
+            bot.logger.info(f"USO CPU: {dados[-1].uso_cpu}%")
+            bot.logger.info("Processos em execução:")
+            
+            for proc in dados[-1].processos:
+                bot.logger.info(f"PID: {proc['pid']}, Nome: {proc['nome']}, Uso de CPU: {proc['uso_cpu']}%")
+                
+        statuses = ["Os outros bots.", "Paciência!", "Com humanos!"]
+        
+        await bot.change_presence(activity=discord.Game(random.choice(statuses)))
+    
+    except Exception as exception:
+        
+        bot.logerror.error(f"{funcao_atual} - {exception}")
 
 @bot.command(name='branch')
 async def branch(contexto):
+
+    funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
     
@@ -75,18 +105,39 @@ async def branch(contexto):
 
         await contexto.send(f"Diretorio: {diretorio_atual}")
         await contexto.send(f"Branch atual >>> \n{listabranch}")
-        bot.logger.info(f"Branch atual: {listabranch.split()}")
+        bot.logger.info(f"{funcao_atual} - Branch atual: {listabranch.split()}")
     
     except Exception as exception:
 
-        bot.logerror.error(f"ERROR - {exception}")
+        bot.logerror.error(f"{funcao_atual} - {exception}")
 
 @bot.command(name='gerar-versao-sig')
 async def gerar_versao_sig(contexto):
-    bot.logger.info('Iniciando processo de build.')
 
-    # Chamar a função para atualizar o projeto
-    await atualizar_projeto(bot, diretorio_projeto, diretorio_sig)
+
+    funcao_atual = inspect.currentframe().f_code.co_name
+    
+    try:
+        bot.logger.info('Iniciando processo de build.')
+
+        # Chamar a função para atualizar o projeto
+        #await atualizar_projeto(bot, diretorio_projeto, diretorio_sig)
+
+        processo_build = await gerar_versao(bot, diretorio_projeto, diretorio_sig)
+        
+        resultado = await regex_build(bot, processo_build)
+
+        bot.logger.info(f"{funcao_atual} - Args: {resultado.args}")
+        bot.logger.info(f"{funcao_atual} - Returncode: {resultado.returncode}")
+        bot.logger.info(f"{funcao_atual} - Task: {resultado.task}")
+        bot.logger.info(f"{funcao_atual} - Stderr: {resultado.stderr}")
+
+        await contexto.send(f"Comando: {resultado.args}")
+        await contexto.send(f"Task: {resultado.task}")
+   
+    except Exception as exception:
+        
+        bot.logerror.error(f'{funcao_atual} - {exception}')
 
 @bot.command(name='ajuda')
 async def ajuda(contexto):
@@ -102,6 +153,11 @@ async def sobre(contexto):
 
 @bot.event
 async def on_message(message):
+    
+    funcao_atual = inspect.currentframe().f_code.co_name
+
+    from util.traduzir import traduzir_texto
+
     # Verifica se a mensagem foi enviada por um usuário (exclui mensagens do próprio bot)
     if message.author != bot.user:
 
@@ -123,41 +179,35 @@ async def on_message(message):
             try:
             
                 if comando == 'mudar-branch':
-                    
-                    await message.channel.send('Checkout iniciado...')
-                    
+
                     branch = partes[1]
-                    processo = await checkout(branch)
-                    resultado = await regex(bot, processo)
-
-                    bot.logger.info(f"Args: {resultado.args}")
-                    bot.logger.info(f"Returncode: {resultado.returncode}")
-                    bot.logger.info(f"Stderr: {resultado.stderr}")
                     
+                    await message.channel.send('\nCheckout iniciado...')
                     await message.channel.send(f'Mudando para a branch --> {branch}')
-
+                    
+                    processo_checkout = await checkout(branch)
+                    resultado = await regex_gradle(bot, str(processo_checkout))
+                    
                     if resultado.returncode == 0:
-            
-                        bot.logger.info(f"Branch alterada - {resultado.stderr}")
-            
+
+                        bot.logger.info(f"{funcao_atual} - Args: {resultado.args}")
+                        bot.logger.info(f"{funcao_atual} - Returncode: {resultado.returncode}")
+                        bot.logger.info(f"{funcao_atual} - Stderr: {resultado.stderr}")
+
+                        traducao = resultado.stderr
+                        traducao = await traduzir_texto(traducao.strip(), destino='pt')
                         await message.channel.send(f"Processamento sendo executado --> {resultado.args}")
-                        await message.channel.send(f"Branch Alterada --> {resultado.stderr}\n\n")
+                        await message.channel.send(f"Branch Alterada --> {traducao}\n\n")
                         await message.channel.send("\nSucesso na alteração da branch!")
 
                     elif resultado.returncode == 1:
                     
                         bot.logerror.error(f"{resultado.stderr}")
                         await message.channel.send(f"Falha ao alterar a branch - {resultado.stderr}")
-                 
-                elif comando == 'gerar-versao-sig':
-                    
-                    if os.chdir == diretorio_projeto:
-
-                        atualizar_projeto = subprocess
 
             except Exception as exception:
 
-                bot.logerror.error(f"ERROR - {exception}")
+                bot.logerror.error(f"{funcao_atual} - {exception}")
        
     # Permite que o bot continue processando outros comandos
     await bot.process_commands(message)

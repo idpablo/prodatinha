@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-from traduzir import traduzir_texto
+from util.traduzir import traduzir_texto
 
-async def atualizar_projeto(bot, diretorio_projeto, diretorio_sig):
+async def gerar_versao(bot, diretorio_projeto, diretorio_sig):
     # Verifica se o diretório do projeto existe
     if not os.path.isdir(diretorio_projeto):
         bot.logger.info(f"Diretório inválido: {diretorio_projeto}")
@@ -47,21 +47,19 @@ async def atualizar_projeto(bot, diretorio_projeto, diretorio_sig):
             bot.logger.info(f"Diretório incorreto. Esperado: {diretorio_sig}")
 
             return
-
-        bot.logger.info(os.listdir(diretorio_atual_sig))
         
         # Executa o comando 'gradle clean war' usando a biblioteca subprocess
-        resultado_build = subprocess.run(['gradle', 'clean', 'war'], capture_output=True, text=True)
-        bot.logger.info(resultado_build)
-
-       
-
-        #if resultado_build.returncode == 0:
+        resultado_build = subprocess.run(['gradle', 'clean', 'war'], capture_output=True, text=True, shell=True,  check=True)
+        saida_build = str(resultado_build)
+        
+        if resultado_build.returncode == 0:
             # Exibe e armazena a saída do comando gradle clean war
-            #output_build = resultado_build.stdout.strip()
-            #bot.logger.info(output_build)
-        #else:
-            #bot.logger.info(f"Erro ao executar gradle clean war: {resultado_build.stderr.strip()}")
+            output_build = resultado_build.stdout.strip()
+            bot.logger.info(output_build)
+        else:
+            bot.logger.info(f"Erro ao executar gradle clean war: {resultado_build.stderr.strip()}")
 
+        return(saida_build)
+    
     except Exception as exception:
         bot.logger.info(f"Erro durante a atualização do projeto: {exception}")
