@@ -1,34 +1,33 @@
 import subprocess
 import platform
-import threading
 import inspect
 import random
-#import json
-#import sys
 import os
-
 import discord
+
 from discord.ext import commands, tasks
-from discord.ext.commands import Bot, Context
-
-from resource.projeto import gerar_versao
-from util.logger import setup_logger
+from discord.ext.commands import Bot
+from discord.errors import GatewayNotFound
 from config.config import load_config
-from util.regex import regex_gradle
-from util.regex import regex_build
+from resource.projeto import gerar_versao
 from resource.apm import monitorar_recursos
+from util.logger import setup_logger
+from util.regex import regex_git_checkout, regex_build, regex_saida_build
 
-""" if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
-    sys.exit("'config.json' not found! Please add it and try again.")
-else:
-    with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
-        config = json.load(file) """
+# Setup loggers
+logger = setup_logger("discord_bot", "discord.log")
+logerror = setup_logger("discord_bot_error", "discord.log")
+logWarnning = setup_logger("discord_bot_warnning", "discord.log")
 
-#Inicialiaando bot com condigurações padrão
-intents = discord.Intents.all()
-
-bot = ()
+bot = Bot
 config = load_config(bot)
+
+bot.logger = logger
+bot.logerror = logerror
+bot.logWarnning = logWarnning
+bot.config = config
+
+intents = discord.Intents.all()
 
 bot = Bot(
     command_prefix=commands.when_mentioned_or(config["prefix"]),
@@ -36,17 +35,10 @@ bot = Bot(
     help_command=None,
 )
 
-# Setup loggers
-logger = setup_logger("discord_bot", "discord.log")
-logerror = setup_logger("discord_bot_error", "discord.log")
-
-bot.logger = logger
-bot.logerror = logerror
-bot.config = config
-
 # Diretório do projeto Java
 diretorio_projeto = "C:/prodata/sig"
 diretorio_sig = "C:/prodata/sig/sig"
+diretorio_war = "C:/prodata/sig/sig/build/libs"
 
 @bot.event
 async def on_ready():
@@ -62,7 +54,13 @@ async def on_ready():
         bot.logger.info("Sincronizado com comandos globais...\n")
         await bot.tree.sync()
 
-@tasks.loop(minutes=1.0)
+@bot.event
+async def on_disconnect():
+    print("Bot desconectado. Reconectando...")
+    await bot.login(bot.token)
+    await bot.connect()
+
+@tasks.loop(minutes=5.0)
 async def status_task() -> None:
     """
     Definindo status do bot.
@@ -71,7 +69,7 @@ async def status_task() -> None:
         funcao_atual = inspect.currentframe().f_code.co_name
 
         dados = monitorar_recursos(bot)
-        
+
         if dados is not None:
             bot.logger.info(f'{funcao_atual} - Status do bot e processamentos:')
             bot.logger.info(f"USO RAM: {dados[-1].uso_ram_mb} MB")
@@ -113,31 +111,42 @@ async def branch(contexto):
 
 @bot.command(name='gerar-versao-sig')
 async def gerar_versao_sig(contexto):
-
-
+ 
     funcao_atual = inspect.currentframe().f_code.co_name
     
     try:
-        bot.logger.info('Iniciando processo de build.')
-
-        # Chamar a função para atualizar o projeto
-        #await atualizar_projeto(bot, diretorio_projeto, diretorio_sig)
-
-        processo_build = await gerar_versao(bot, diretorio_projeto, diretorio_sig)
         
-        resultado = await regex_build(bot, processo_build)
+        bot.logger.info('Iniciando processos para build.')
 
-        bot.logger.info(f"{funcao_atual} - Args: {resultado.args}")
-        bot.logger.info(f"{funcao_atual} - Returncode: {resultado.returncode}")
-        bot.logger.info(f"{funcao_atual} - Task: {resultado.task}")
-        bot.logger.info(f"{funcao_atual} - Stderr: {resultado.stderr}")
+        saida_clean, saida_build = await gerar_versao(bot, diretorio_projeto, diretorio_sig)
+        
+        resultado_gradle_clean = await regex_build(bot, saida_clean)
+        resultado_gradle_war = await regex_saida_build(bot, saida_build)
 
-        await contexto.send(f"Comando: {resultado.args}")
-        await contexto.send(f"Task: {resultado.task}")
+        bot.logger.info(f"{funcao_atual} - Resultado Gerar Versão: {resultado_gradle_clean}")
+        
+        bot.logger.info(f"{funcao_atual} - Args: {resultado_gradle_clean.args}")
+        bot.logger.info(f"{funcao_atual} - Returncode: {resultado_gradle_clean.returncode}")
+        bot.logger.info(f"{funcao_atual} - Task: {resultado_gradle_clean.task}")
+        bot.logger.info(f"{funcao_atual} - Stderr: {resultado_gradle_clean.stderr}") 
+
+        bot.logger.info(f"saida_build: {resultado_gradle_war}") 
+
+        arquivo_sig = diretorio_war + "/sig.war"
+
+        # Verificar se o arquivo existe
+        if not os.path.isfile(arquivo_sig):
+            await contexto.send("Arquivo sig.war não encontrado.")
+            return
+
+        # Enviar o arquivo no canal
+        with open(arquivo_sig, 'rb') as file:
+            await contexto.send(file=discord.File(file))
+
    
     except Exception as exception:
         
-        bot.logerror.error(f'{funcao_atual} - {exception}')
+        bot.logerror.error(f'{funcao_atual} - {exception}') 
 
 @bot.command(name='ajuda')
 async def ajuda(contexto):
@@ -186,25 +195,25 @@ async def on_message(message):
                     await message.channel.send(f'Mudando para a branch --> {branch}')
                     
                     processo_checkout = await checkout(branch)
-                    resultado = await regex_gradle(bot, str(processo_checkout))
+                    resultado_checkout = await regex_git_checkout(bot, processo_checkout)
                     
-                    if resultado.returncode == 0:
+                    if resultado_checkout.returncode == 0:
 
-                        bot.logger.info(f"{funcao_atual} - Args: {resultado.args}")
-                        bot.logger.info(f"{funcao_atual} - Returncode: {resultado.returncode}")
-                        bot.logger.info(f"{funcao_atual} - Stderr: {resultado.stderr}")
+                        bot.logger.info(f"{funcao_atual} - Args: {resultado_checkout.args}")
+                        bot.logger.info(f"{funcao_atual} - Returncode: {resultado_checkout.returncode}")
+                        bot.logger.info(f"{funcao_atual} - Stderr: {resultado_checkout.stderr}")
 
-                        traducao = resultado.stderr
+                        traducao = resultado_checkout.stderr
                         traducao = await traduzir_texto(traducao.strip(), destino='pt')
-                        await message.channel.send(f"Processamento sendo executado --> {resultado.args}")
+                        await message.channel.send(f"Processamento sendo executado --> {resultado_checkout.args}")
                         await message.channel.send(f"Branch Alterada --> {traducao}\n\n")
                         await message.channel.send("\nSucesso na alteração da branch!")
 
-                    elif resultado.returncode == 1:
+                    elif resultado_checkout.returncode == 1:
                     
-                        bot.logerror.error(f"{resultado.stderr}")
-                        await message.channel.send(f"Falha ao alterar a branch - {resultado.stderr}")
-
+                        bot.logerror.error(f"{resultado_checkout.stderr}")
+                        await message.channel.send(f"Falha ao alterar a branch - {resultado_checkout.stderr}")
+                
             except Exception as exception:
 
                 bot.logerror.error(f"{funcao_atual} - {exception}")
@@ -215,6 +224,8 @@ async def on_message(message):
 async def checkout(branch):
     
     try:
+
+        funcao_atual = inspect.currentframe().f_code.co_name
 
         os.chdir(diretorio_projeto)
         diretorio_atual = os.getcwd()
@@ -231,7 +242,10 @@ async def checkout(branch):
         return(mudar_branch)
     
     except Exception as exeption:
-        bot.logerror.error(f"ERROR - {exeption}")
+        bot.logerror.error(f"{funcao_atual} - {exeption}")
         return("Erro ao alterar branch")
-
-bot.run(config["token"])
+    
+try:
+    bot.run(config["token"])
+except GatewayNotFound as exeption:
+    bot.logWarnning.warnning(f"{exeption}")

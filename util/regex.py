@@ -15,6 +15,7 @@ class ResultadoRegex:
         else:
             self.task = None
 
+#funcao regex_build analisa e capitura a saida do comando gradle clean, não a uso efetivo atualmente
 async def regex_build(bot, texto):
     try:
         bot.logger.info(f"Regex iniciado")
@@ -42,7 +43,7 @@ async def regex_build(bot, texto):
         bot.logerror.error(f'{arquivo_atual} - {exception}')
         return None
 
-async def regex_gradle(bot, texto):
+async def regex_git_checkout(bot, texto):
     try:
         args_match = re.search(r"args='(.*?)'", texto)
         args = args_match.group(1) if args_match else ""
@@ -60,5 +61,22 @@ async def regex_gradle(bot, texto):
 
     except Exception as exception:
 
+        bot.logerror.error(f'{arquivo_atual} - {exception}')
+        return None
+
+async def regex_saida_build(bot, texto):
+    try:
+        
+        regex = r".*BUILD SUCCESSFUL.*"
+
+        resultado = re.search(regex, texto, re.MULTILINE)
+        if resultado:
+            
+            linha_completa = resultado.group()
+            
+            return linha_completa
+
+
+    except Exception as exception:
         bot.logerror.error(f'{arquivo_atual} - {exception}')
         return None
