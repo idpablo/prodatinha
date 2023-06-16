@@ -11,22 +11,19 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.errors import GatewayNotFound
 from config.config import load_config
-from resource.projeto import *
+from resource.projeto import gradle_clean, gradle_war
+from resource.upload import upload_arquivo
 from resource.apm import monitorar_recursos
 from util.logger import setup_logger
 from util.regex import regex_git_checkout, regex_saida_war
 
 # Setup loggers
 logger = setup_logger("discord_bot", "discord.log")
-logerror = setup_logger("discord_bot_error", "discord.log")
-logWarnning = setup_logger("discord_bot_warnning", "discord.log")
 
 bot = Bot
 config = load_config(bot)
 
 bot.logger = logger
-bot.logerror = logerror
-bot.logWarnning = logWarnning
 bot.config = config
 
 intents = discord.Intents.all()
@@ -40,7 +37,7 @@ bot = Bot(
 # Diretório do projeto Java
 diretorio_projeto = "C:/prodata/sig"
 diretorio_sig = "C:/prodata/sig/sig"
-diretorio_war = "C:/prodata/sig/sig/build/libs"
+arquivo_sig = "C:/prodata/sig/sig/build/libs/sig.war"
 
 @bot.event
 async def on_ready():
@@ -88,6 +85,13 @@ async def status_task() -> None:
     except Exception as exception:
         
         bot.logerror.error(f"{funcao_atual} - {exception}")
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("Comando não encontrado.")
+    else:
+        raise error
 
 @bot.command(name='branch')
 async def branch(contexto):
@@ -151,16 +155,19 @@ async def gerar_versao_sig(contexto):
                     #for linha in fomatado_resultado_gradle_war:
                         #await contexto.send(f"{linha}")
 
-        arquivo_sig = diretorio_war + "/sig.war"
-
-        # Verificar se o arquivo existe
-        if not os.path.isfile(arquivo_sig):
-            await contexto.send("Arquivo sig.war não encontrado.")
-            return
-
     except Exception as exception:
         
         bot.logerror.error(f'{funcao_atual} - {exception}') 
+
+@bot.command(name='upload')
+async def upload_war(contexto):
+    
+    # Verificar se o arquivo existe
+    if not os.path.isfile(arquivo_sig):
+        await contexto.send("Arquivo sig.war não encontrado.")
+        return
+    
+    upload_arquivo('sig.war', diretorio_sig)
 
 @bot.command(name='ajuda')
 async def ajuda(contexto):
@@ -262,4 +269,4 @@ async def checkout(branch):
 try:
     bot.run(config["token"])
 except GatewayNotFound as exeption:
-    bot.logWarnning.warnning(f"{exeption}")
+    bot.logger.warnning(f"{exeption}")

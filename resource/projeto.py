@@ -1,16 +1,13 @@
 #!/usr/bin/python
 
 import os
-import json
 import sys
+import json
 import asyncio
 import inspect
 import subprocess
 
 from util.traduzir import traduzir_texto
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-
 
 async def reconectar_bot(bot):
     
@@ -18,19 +15,19 @@ async def reconectar_bot(bot):
     await bot.login(bot.token)
     await bot.connect()
 
-async def versionamento(diretorio_json):
+async def versionamento(bot, diretorio_json):
     
     funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
 
-        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
-            sys.exit("'config.json' não encontrado, adicione e tente novamente.")
+        if not os.path.isfile(diretorio_json):
+            sys.exit("'version.json' não encontrado, adicione e tente novamente.")
         else:
-            with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
-                config = json.load(file)
+            with open(diretorio_json) as file:
+                version = json.load(file)
 
-                return config
+                return version
     
     except Exception as exception:
 
@@ -142,4 +139,3 @@ async def gradle_war(bot):
     except Exception as exception:
         bot.logerror.error(f"{funcao_atual} - {exception}")
         await asyncio.sleep(5)
-
