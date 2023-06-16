@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import logging
 
 class LoggingFormatter(logging.Formatter):

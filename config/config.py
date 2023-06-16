@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import inspect
 import json
 import sys
@@ -10,7 +12,7 @@ def load_config(bot):
     try:
 
         if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
-            sys.exit("'config.json' not found! Please add it and try again.")
+            sys.exit("'config.json' não encontrado, adicione e tente novamente.")
         else:
             with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
                 config = json.load(file)
@@ -19,4 +21,4 @@ def load_config(bot):
     
     except Exception as exception:
 
-        bot.logerror.error(f"{funcao_atual} - {exception}")
+        bot.logger.error(f"{funcao_atual} - {exception}")

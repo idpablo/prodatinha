@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import inspect
 import re
 
@@ -64,18 +66,14 @@ async def regex_git_checkout(bot, texto):
         bot.logerror.error(f'{arquivo_atual} - {exception}')
         return None
 
-async def regex_saida_build(bot, texto):
+async def regex_saida_war(bot, array):
     try:
-        
-        regex = r".*BUILD SUCCESSFUL.*"
 
-        resultado = re.search(regex, texto, re.MULTILINE)
-        if resultado:
-            
-            linha_completa = resultado.group()
-            
-            return linha_completa
-
+        padrao = r"(Execution Time.*[\s\S]*?up-to-date)"  
+        resultado = re.findall(padrao, array, re.DOTALL)
+        resultado = '\n'.join(resultado)
+        bot.logger.info(f"info regex: {resultado}")
+        return resultado
 
     except Exception as exception:
         bot.logerror.error(f'{arquivo_atual} - {exception}')

@@ -1,61 +1,52 @@
+#!/usr/bin/python
+
 import os
+import json
+import sys
 import asyncio
 import inspect
 import subprocess
 
 from util.traduzir import traduzir_texto
-from config.config import load_config
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
-async def gerar_versao(bot, diretorio_projeto, diretorio_sig):
 
-    config = load_config(bot)
+async def reconectar_bot(bot):
+    
+    bot.logger.info("Reconectando o bot...")
+    await bot.login(bot.token)
+    await bot.connect()
 
-    async def reconectar_bot():
-        bot.logger.info("Reconectando o bot...")
-        await bot.login(bot.token)
-        await bot.connect()
-
-    async def build_gradle():
-        try:
-            funcao_atual = inspect.currentframe().f_code.co_name
-
-            saida_build = "Iniciando build do projeto"
-            bot.logger.info(saida_build)
-
-            while True:
-
-                processo = await asyncio.create_subprocess_shell('gradle war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-                stdout, stderr = await processo.communicate()
-
-                 # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
-                while processo.returncode is None:
-                    bot.logger.info("Executando o processo...")
-                    await asyncio.sleep(10)  # Exibe uma mensagem a cada 30 segundos
-
-                if processo.returncode == 0:
-                    bot.logger.info(f"Saida do build: {stdout.decode()}")
-                else:
-                    bot.logger.error(f"Erro ao executar o build: {stderr.decode()}")
-
-                return stdout.decode()
-
-        except Exception as exception:
-            bot.logerror.error(f"{funcao_atual} - {exception}")
-            await asyncio.sleep(5)
+async def versionamento(diretorio_json):
+    
+    funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
-        
-        funcao_atual = inspect.currentframe().f_code.co_names
 
-        if not bot.is_ready():
-            await reconectar_bot()
+        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
+            sys.exit("'config.json' não encontrado, adicione e tente novamente.")
+        else:
+            with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
+                config = json.load(file)
+
+                return config
+    
+    except Exception as exception:
+
+        bot.logger.error(f"{funcao_atual} - {exception}")
+
+async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
+
+    try:
+        funcao_atual = inspect.currentframe().f_code.co_names
 
         # Verifica se o diretório do projeto existe
         if not os.path.isdir(diretorio_projeto):
             bot.logger.info(f"Diretório inválido: {diretorio_projeto}")
             return
 
-        # Navega até o diretório do projeto
+        # Navega até o diretório do projetos
         os.chdir(diretorio_projeto)
 
         # Verifica o diretório atual é o diretório correto
@@ -92,28 +83,63 @@ async def gerar_versao(bot, diretorio_projeto, diretorio_sig):
             bot.logger.info(f"Diretório incorreto. Esperado: {diretorio_sig}")
             return
         
-        # Executa o comando 'gradle clean war' usando a biblioteca subprocess
-        resultado_clean = subprocess.run(['gradle', 'clean'], capture_output=True, text=True, shell=True,  check=True)
-        
-        saida_clean = str(resultado_clean)
-        
-        if resultado_clean.returncode == 0:
+        return True;
 
-            try:
-                saida_build = await build_gradle()
-                bot.logger.info(f"Saida: {saida_build}")
-                return saida_build
-            
-            except Exception as exception:
-            
-                bot.logger.info(f"Erro durante o build do projeto: {exception}")
-        else:
-            
-            bot.logger.info(f"Erro ao executar gradle clean: {saida_clean.stderr.strip()}")
-
-        return(saida_clean, saida_build)
     except Exception as exception:
-
         bot.logerror.error(f"funcao_atual - { exception}")
-        bot.logWarnning.warnning(f"funcao_atual - { exception}")
+
+async def gradle_clean(bot):
+    try:
+        funcao_atual = inspect.currentframe().f_code.co_name
+
+        saida_build = "Iniciando clean do projeto"
+        bot.logger.info(saida_build)
+
+        while True:
+
+            processo = await asyncio.create_subprocess_shell('gradle clean', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await processo.communicate()
+
+                # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
+            while processo.returncode is None:
+                bot.logger.info("Executando o processo...")
+                await asyncio.sleep(10)  # Exibe uma mensagem a cada 10 segundos
+
+            if processo.returncode == 0:
+                bot.logger.info(f"Saida do gradle clean: {stdout.decode()}")
+                return stdout.decode(), processo
+            else:
+                bot.logger.error(f"Erro ao executar o gradle clean: {stderr.decode()}")
+
+    except Exception as exception:
+        bot.logerror.error(f"{funcao_atual} - {exception}")
+        await asyncio.sleep(5)
+
+async def gradle_war(bot):
+    try:
+        funcao_atual = inspect.currentframe().f_code.co_name
+
+        saida_build = "Iniciando build do projeto"
+        bot.logger.info(saida_build)
+
+        while True:
+
+            processo = await asyncio.create_subprocess_shell('gradle war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await processo.communicate()
+
+                # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
+            while processo.returncode is None:
+                bot.logger.info("Executando o processo...")
+                await asyncio.sleep(10)  # Exibe uma mensagem a cada 30 segundos
+
+            if processo.returncode == 0:
+                saida_build = stdout.decode()
+                bot.logger.info(f"Saida do comando gradle war: {saida_build}")
+                return stdout.decode(), processo
+            else:
+                bot.logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")
+
+    except Exception as exception:
+        bot.logerror.error(f"{funcao_atual} - {exception}")
+        await asyncio.sleep(5)
 

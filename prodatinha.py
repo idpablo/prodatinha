@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import subprocess
 import platform
 import inspect
@@ -9,10 +11,10 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.errors import GatewayNotFound
 from config.config import load_config
-from resource.projeto import gerar_versao
+from resource.projeto import *
 from resource.apm import monitorar_recursos
 from util.logger import setup_logger
-from util.regex import regex_git_checkout, regex_build, regex_saida_build
+from util.regex import regex_git_checkout, regex_saida_war
 
 # Setup loggers
 logger = setup_logger("discord_bot", "discord.log")
@@ -79,7 +81,7 @@ async def status_task() -> None:
             for proc in dados[-1].processos:
                 bot.logger.info(f"PID: {proc['pid']}, Nome: {proc['nome']}, Uso de CPU: {proc['uso_cpu']}%")
                 
-        statuses = ["Os outros bots.", "Paciência!", "Com humanos!"]
+        statuses = ["com outros bots.", "Paciência!", "com humanos!"]
         
         await bot.change_presence(activity=discord.Game(random.choice(statuses)))
     
@@ -111,26 +113,43 @@ async def branch(contexto):
 
 @bot.command(name='gerar-versao-sig')
 async def gerar_versao_sig(contexto):
+
+    await bot.change_presence(activity=discord.Game('Versão sendo gerada!'))
  
     funcao_atual = inspect.currentframe().f_code.co_name
+    nome_usuario = contexto.author.name
     
     try:
         
-        bot.logger.info('Iniciando processos para build.')
+        await contexto.send(f'Iniciando processos para build.')
+        await contexto.send(f'Requerente: {nome_usuario}.')
 
-        saida_clean, saida_build = await gerar_versao(bot, diretorio_projeto, diretorio_sig)
-        
-        resultado_gradle_clean = await regex_build(bot, saida_clean)
-        resultado_gradle_war = await regex_saida_build(bot, saida_build)
+        ambiente = await configurar_ambiente(bot, diretorio_projeto, diretorio_sig)
+            
+        if ambiente == True: 
+           
+            await contexto.send(f"Ambiente configurado >>> ")
+            
+            resultado_gradle_clean, processo_clean = await gradle_clean(bot)
+            await contexto.send(f"Retorno 'gradle clean'(remove versões geradas anteriormente): \n\n{resultado_gradle_clean}")
 
-        bot.logger.info(f"{funcao_atual} - Resultado Gerar Versão: {resultado_gradle_clean}")
-        
-        bot.logger.info(f"{funcao_atual} - Args: {resultado_gradle_clean.args}")
-        bot.logger.info(f"{funcao_atual} - Returncode: {resultado_gradle_clean.returncode}")
-        bot.logger.info(f"{funcao_atual} - Task: {resultado_gradle_clean.task}")
-        bot.logger.info(f"{funcao_atual} - Stderr: {resultado_gradle_clean.stderr}") 
+            if processo_clean.returncode == 0:
+                
+                await contexto.send(f"\n\nProcesso 'gradle clean' executado com exito >>> ")
+                await contexto.send(f"Iniciando empacotamento da aplicação >>> ")
 
-        bot.logger.info(f"saida_build: {resultado_gradle_war}") 
+                resultado_gradle_war, processo_war = await gradle_war(bot)
+
+                if processo_war.returncode == 0:
+                    
+                    await contexto.send(f"\nProcesso de build executado com exito >>> ")
+
+                    fomatado_resultado_gradle_war = await regex_saida_war(bot, str(resultado_gradle_war))
+                    
+                    await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
+                    await contexto.send(f"{fomatado_resultado_gradle_war}")
+                    #for linha in fomatado_resultado_gradle_war:
+                        #await contexto.send(f"{linha}")
 
         arquivo_sig = diretorio_war + "/sig.war"
 
@@ -139,11 +158,6 @@ async def gerar_versao_sig(contexto):
             await contexto.send("Arquivo sig.war não encontrado.")
             return
 
-        # Enviar o arquivo no canal
-        with open(arquivo_sig, 'rb') as file:
-            await contexto.send(file=discord.File(file))
-
-   
     except Exception as exception:
         
         bot.logerror.error(f'{funcao_atual} - {exception}') 
@@ -216,7 +230,7 @@ async def on_message(message):
                 
             except Exception as exception:
 
-                bot.logerror.error(f"{funcao_atual} - {exception}")
+                bot.logger.error(f"{funcao_atual} - {exception}")
        
     # Permite que o bot continue processando outros comandos
     await bot.process_commands(message)
@@ -242,7 +256,7 @@ async def checkout(branch):
         return(mudar_branch)
     
     except Exception as exeption:
-        bot.logerror.error(f"{funcao_atual} - {exeption}")
+        bot.logger.error(f"{funcao_atual} - {exeption}")
         return("Erro ao alterar branch")
     
 try:

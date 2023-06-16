@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from googletrans import Translator
 
 async def traduzir_texto(texto, destino='pt'):

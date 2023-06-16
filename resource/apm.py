@@ -1,5 +1,6 @@
+#!/usr/bin/python
+
 import psutil
-import time
 
 class monitor_recursos:
     def __init__(self, uso_ram_mb, uso_cpu=None, processos=None):
