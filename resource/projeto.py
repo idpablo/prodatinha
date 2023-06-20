@@ -127,11 +127,10 @@ async def gradle_war(bot):
                 # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
             while processo.returncode is None:
                 bot.logger.info("Executando o processo...")
-                await asyncio.sleep(10)  # Exibe uma mensagem a cada 30 segundos
+                await asyncio.sleep(10)  # Exibe uma mensagem a cada 10 segundos
 
             if processo.returncode == 0:
                 saida_build = stdout.decode()
-                bot.logger.info(f"Saida do comando gradle war: {saida_build}")
                 return stdout.decode(), processo
             else:
                 bot.logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")

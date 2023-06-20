@@ -3,3 +3,7 @@ discord-auto-reconnect
 pydrive     
 psutil 
 docker
+google-auth 
+google-auth-oauthlib 
+google-auth-httplib2 
+google-api-python-client

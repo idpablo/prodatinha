@@ -1,29 +1,55 @@
 #!/usr/bin/python
 
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+import os
+import json
+import asyncio
+
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+from googleapiclient.http import MediaFileUpload
 
 from util.logger import setup_logger
 logger = setup_logger("upload.py", "discord.log")
+diretorio_credenciais = 'C:/prodata/python/prodatinha/config/prodatinha-6da2bc4e0f96.json'
 
-async def upload_arquivo(nome_arquivo, caminho_arquvio):
+async def upload_arquivo(nome_arquivo, arquivo_sig):
 
     try:
+        credenciais = service_account.Credentials.from_service_account_file(
+            diretorio_credenciais,
+            scopes=['https://www.googleapis.com/auth/drive']
+        )
 
-        # Autenticação e autorização
-        gauth = GoogleAuth()
-        gauth.LocalWebserverAuth()
-        drive = GoogleDrive(gauth)
+        servico_drive = build('drive', 'v3', credentials=credenciais)
 
-        # Fazer upload do arquivo
-        file_name = 'arquivo.txt'  # Nome do arquivo que será enviado
-        file_path = 'caminho/do/arquivo/arquivo.txt'  # Caminho completo do arquivo
+        metadados_arquivo = {
+            'name': nome_arquivo, 
+        }
+        
+        media = MediaFileUpload(arquivo_sig, resumable=True)
+        
+        while True:
+            
+            processo_upload = asyncio.create_task(servico_drive.files().create(
+                body=metadados_arquivo,
+                media_body=media,
+                fields='id', 
+            ).execute())
 
-        gfile = drive.CreateFile({'title': file_name})
-        gfile.SetContentFile(file_path)
-        gfile.Upload()
+            resultado_upload = await processo_upload.communicate()
 
-        logger.info(f'Arquivo {file_name} enviado com sucesso!')
-    
+            return resultado_upload
+            
+        # Obtendo o ID do arquivo enviado
+        id_arquivo = resultado_upload['id']
+
+        link_arquivo = servico_drive.files().get(fileId=id_arquivo, fields='webViewLink').execute()
+
+        link_arquivo = link_arquivo['webViewLink']
+
+        logger.info(f'Upload concluído. ID do arquivo: {link_arquivo}')
+
+        return link_arquivo
+
     except Exception as exception:
         logger.error(f"{exception}")

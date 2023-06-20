@@ -10,8 +10,9 @@ import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.errors import GatewayNotFound
+
 from config.config import load_config
-from resource.projeto import gradle_clean, gradle_war
+from resource.projeto import *
 from resource.upload import upload_arquivo
 from resource.apm import monitorar_recursos
 from util.logger import setup_logger
@@ -38,6 +39,7 @@ bot = Bot(
 diretorio_projeto = "C:/prodata/sig"
 diretorio_sig = "C:/prodata/sig/sig"
 arquivo_sig = "C:/prodata/sig/sig/build/libs/sig.war"
+diretorio_json = "C:/prodata/sig/sig/WebContent/version.json"
 
 @bot.event
 async def on_ready():
@@ -55,9 +57,16 @@ async def on_ready():
 
 @bot.event
 async def on_disconnect():
-    print("Bot desconectado. Reconectando...")
-    await bot.login(bot.token)
-    await bot.connect()
+
+    try:
+
+        print("Bot desconectado. Reconectando...")
+        await bot.login(bot.token)
+        await bot.connect()
+
+    except Exception as exception:
+
+        logger.error(f"{exception}")
 
 @tasks.loop(minutes=5.0)
 async def status_task() -> None:
@@ -84,7 +93,7 @@ async def status_task() -> None:
     
     except Exception as exception:
         
-        bot.logerror.error(f"{funcao_atual} - {exception}")
+        bot.logger.error(f"{funcao_atual} - {exception}")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -132,10 +141,15 @@ async def gerar_versao_sig(contexto):
             
         if ambiente == True: 
            
-            await contexto.send(f"Ambiente configurado >>> ")
+            await contexto.send(f"Ambiente configurado >>> \n Load versão atual:")
+            
+            versao = versionamento(bot, diretorio_json)
+
+            await contexto.send(f"Versão atual: \n\n{versao}")
+            
             
             resultado_gradle_clean, processo_clean = await gradle_clean(bot)
-            await contexto.send(f"Retorno 'gradle clean'(remove versões geradas anteriormente): \n\n{resultado_gradle_clean}")
+            await contexto.send(f"Retorno gradle clean(remove versões geradas anteriormente): \n {resultado_gradle_clean}")
 
             if processo_clean.returncode == 0:
                 
@@ -167,7 +181,20 @@ async def upload_war(contexto):
         await contexto.send("Arquivo sig.war não encontrado.")
         return
     
-    upload_arquivo('sig.war', diretorio_sig)
+    task = await upload_arquivo('sig', arquivo_sig)
+
+    await contexto.send(f"Upload concluído. Link \n\n{task}")
+
+    # Aguardar a conclusão do upload e enviar a mensagem de retorno
+    #if task.exception() is not None:
+        #await contexto.send("Ocorreu um erro durante o upload do arquivo.")
+    #else:
+        #await contexto.send("Upload concluído.")
+
+    #if link_arquivo:
+        #await contexto.send(f"Upload concluído. Aqui está o link do arquivo: {link_arquivo}")
+    #else:
+        #await contexto.send("Ocorreu um erro durante o upload do arquivo.")
 
 @bot.command(name='ajuda')
 async def ajuda(contexto):

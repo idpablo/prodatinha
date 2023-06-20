@@ -42,7 +42,7 @@ async def regex_build(bot, texto):
 
     except Exception as exception:
         
-        bot.logerror.error(f'{arquivo_atual} - {exception}')
+        bot.logger.error(f'{arquivo_atual} - {exception}')
         return None
 
 async def regex_git_checkout(bot, texto):
@@ -63,7 +63,7 @@ async def regex_git_checkout(bot, texto):
 
     except Exception as exception:
 
-        bot.logerror.error(f'{arquivo_atual} - {exception}')
+        bot.logger.error(f'{arquivo_atual} - {exception}')
         return None
 
 async def regex_saida_war(bot, array):
@@ -72,9 +72,8 @@ async def regex_saida_war(bot, array):
         padrao = r"(Execution Time.*[\s\S]*?up-to-date)"  
         resultado = re.findall(padrao, array, re.DOTALL)
         resultado = '\n'.join(resultado)
-        bot.logger.info(f"info regex: {resultado}")
         return resultado
 
     except Exception as exception:
-        bot.logerror.error(f'{arquivo_atual} - {exception}')
+        bot.logger.error(f'{arquivo_atual} - {exception}')
         return None

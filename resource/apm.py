@@ -32,5 +32,5 @@ def monitorar_recursos(bot):
         return informacoes
     
     except Exception as exception:
-        bot.logerror.error(f"{exception}")
+        bot.logger.error(f"{exception}")
         return None
