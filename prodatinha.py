@@ -4,7 +4,6 @@ import subprocess
 import platform
 import inspect
 import random
-import openai
 import os
 import discord
 
@@ -262,30 +261,6 @@ async def on_message(message):
                     
                         bot.logerror.error(f"{resultado_checkout.stderr}")
                         await message.channel.send(f"Falha ao alterar a branch - {resultado_checkout.stderr}")
-                
-                elif comando == 'chat':
-
-                    config_gpt = load_config_gpt(bot)
-
-                    apikey = config_gpt["api-key"]
-
-                    bot.logger.info(f"Api key: {apikey}")
-
-                    openai.api_key = apikey
-
-                    comandochat = partes[1]
-
-                    await message.channel.send(f"Pergunta feita --> {comandochat}\n\n")
-
-                    response = openai.Completion.create(
-                        engine = 'text-davinci-003',
-                        prompt = comandochat,
-                        max_tokens=50
-                    )
-
-                    reposta = response.choices[0].text.strip()
-
-                    await message.channel.send(f"Respota --> {reposta}\n\n")
                 
             except Exception as exception:
 
