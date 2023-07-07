@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import inspect
 import json
@@ -22,3 +22,19 @@ def load_config(bot):
     except Exception as exception:
 
         bot.logger.error(f"{funcao_atual} - {exception}")
+
+def load_config_gpt(bot):
+
+    try:
+
+        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/chatgpt.json"):
+            sys.exit("'chatgpt.json' não encontrado, adicione e tente novamente.")
+        else:
+            with open(f"{os.path.realpath(os.path.dirname(__file__))}/chatgpt.json") as file:
+                config_gpt = json.load(file)
+
+                return config_gpt
+    
+    except Exception as exception:
+        
+        bot.logger.error(f"{exception}")

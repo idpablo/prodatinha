@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import logging
 
 class LoggingFormatter(logging.Formatter):
+    
     # Colors
     black = "\x1b[30m"
     red = "\x1b[31m"
@@ -10,6 +11,7 @@ class LoggingFormatter(logging.Formatter):
     yellow = "\x1b[33m"
     blue = "\x1b[34m"
     gray = "\x1b[38m"
+    
     # Styles
     reset = "\x1b[0m"
     bold = "\x1b[1m"
@@ -36,12 +38,10 @@ def setup_logger(logger_name, log_file):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
-    # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(LoggingFormatter())
     logger.addHandler(console_handler)
 
-    # File handler
     file_handler = logging.FileHandler(filename=log_file, encoding="utf-8", mode="a")
     file_handler_formatter = logging.Formatter(
         "[{asctime}] [{levelname:<0}] {name}: {message}", "%d-%m-%Y %H:%M:%S", style="{"

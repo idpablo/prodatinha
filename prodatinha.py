@@ -1,9 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import subprocess
 import platform
 import inspect
 import random
+import openai
 import os
 import discord
 
@@ -11,7 +12,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.errors import GatewayNotFound
 
-from config.config import load_config
+from config.config import load_config, load_config_gpt
 from resource.projeto import *
 from resource.upload import upload_arquivo
 from resource.apm import monitorar_recursos
@@ -175,7 +176,7 @@ async def gerar_versao_sig(contexto):
 
 @bot.command(name='upload')
 async def upload_war(contexto):
-    
+
     # Verificar se o arquivo existe
     if not os.path.isfile(arquivo_sig):
         await contexto.send("Arquivo sig.war não encontrado.")
@@ -261,6 +262,30 @@ async def on_message(message):
                     
                         bot.logerror.error(f"{resultado_checkout.stderr}")
                         await message.channel.send(f"Falha ao alterar a branch - {resultado_checkout.stderr}")
+                
+                elif comando == 'chat':
+
+                    config_gpt = load_config_gpt(bot)
+
+                    apikey = config_gpt["api-key"]
+
+                    bot.logger.info(f"Api key: {apikey}")
+
+                    openai.api_key = apikey
+
+                    comandochat = partes[1]
+
+                    await message.channel.send(f"Pergunta feita --> {comandochat}\n\n")
+
+                    response = openai.Completion.create(
+                        engine = 'text-davinci-003',
+                        prompt = comandochat,
+                        max_tokens=50
+                    )
+
+                    reposta = response.choices[0].text.strip()
+
+                    await message.channel.send(f"Respota --> {reposta}\n\n")
                 
             except Exception as exception:
 

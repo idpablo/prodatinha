@@ -1,4 +1,4 @@
-#!/usr/bin/pythons
+#!/usr/bin/python3pb
 
 import docker
 

@@ -1,0 +1,87 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+
+archivesBaseName = 'sigpwebfuncoes'
+version = '1.0-SNAPSHOT'
+
+defaultTasks 'war'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+compileJava.options.encoding = "windows-1252"
+
+sourceSets {
+    main {
+        java {
+            srcDirs '/src', '../sigpweb/src/negocio/', '/web', '../sigpweb/src/dominio/', '../sigpweb/src/arquitetura/anotacao/'
+        }
+
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.8'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.8.8'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.8'
+
+    compile group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3'
+    compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '9.0.8'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.2'
+
+    compile group: 'io.github.openfeign', name: 'feign-gson', version: '10.11'
+}
+
+configurations {
+    compile.exclude module: 'commons-logging'
+    compile.exclude module: 'servlet-api'
+    runtime.exclude module: 'org.bouncycastle:bctsp-jdk14'
+}
+
+war {
+
+    from('web/') {
+        include '**'
+        into ''
+    }
+
+    from('src/com', ) {
+        include '**'
+        into 'WEB-INF/classes/com'
+    }
+
+    from('src/servico', ) {
+        include '**'
+        into 'WEB-INF/classes/servico'
+    }
+
+    from('../sigpweb/src/dominio/') {
+        include '**'
+        into 'WEB-INF/classes/dominio/'
+    }
+
+    from('../sigpweb/src/negocio/') {
+        include '**'
+        into 'WEB-INF/classes/negocio/'
+
+    }
+
+    from('../sigpweb/src/arquitetura/anotacao') {
+        include '**'
+        into 'WEB-INF/classes/arquitetura/anotacao/'
+    }
+
+    from('../sigpweb/src/servico/comum/folha/DTO') {
+        include '**'
+        into 'WEB-INF/classes/servico/folha/DTO/'
+    }
+
+}

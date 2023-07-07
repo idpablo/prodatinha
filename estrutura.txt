@@ -13,12 +13,3 @@ prodatinha/
     │   └── projeto.py
     │   └── upload.py
     │   └── status_war_gerado.py
-    └── dados/
-        ├── input/
-        │   ├── arquivo1.txt
-        │   ├── arquivo2.csv
-        │   └── ...
-        └── output/
-            ├── resultado1.txt
-            ├── resultado2.csv
-            └── ...
