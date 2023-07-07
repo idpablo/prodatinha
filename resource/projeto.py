@@ -7,7 +7,7 @@ import asyncio
 import inspect
 import subprocess
 
-from util.traduzir import traduzir_texto
+import util.traduzir as traduzir
 
 async def reconectar_bot(bot):
     

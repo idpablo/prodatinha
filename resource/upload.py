@@ -8,8 +8,9 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.http import MediaFileUpload
 
-from util.logger import setup_logger
-logger = setup_logger("upload.py", "discord.log")
+import util.logger as logger
+
+logger = logger.setup_logger("upload.py", "discord.log")
 diretorio_credenciais = 'C:/prodata/python/prodatinha/config/prodatinha-6da2bc4e0f96.json'
 
 async def upload_arquivo(nome_arquivo, arquivo_sig):

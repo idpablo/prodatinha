@@ -3,26 +3,26 @@
 import subprocess
 import platform
 import inspect
+import discord
 import random
 import os
-import discord
 
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.errors import GatewayNotFound
 
-from config.config import load_config, load_config_gpt
-from resource.projeto import *
-from resource.upload import upload_arquivo
-from resource.apm import monitorar_recursos
-from util.logger import setup_logger
-from util.regex import regex_git_checkout, regex_saida_war
+import resource.projeto as projeto
+import config.config as config
+import resource.upload as upload
+import resource.apm as apm
+import util.logger as logger
+import util.regex as regex
 
 # Setup loggers
-logger = setup_logger("discord_bot", "discord.log")
+logger = logger.setup_logger("discord_bot", "discord.log")
 
 bot = Bot
-config = load_config(bot)
+config = config.load_config(bot)
 
 bot.logger = logger
 bot.config = config
@@ -76,7 +76,7 @@ async def status_task() -> None:
     try:
         funcao_atual = inspect.currentframe().f_code.co_name
 
-        dados = monitorar_recursos(bot)
+        dados = apm.monitorar_recursos(bot)
 
         if dados is not None:
             bot.logger.info(f'{funcao_atual} - Status do bot e processamentos:')
@@ -137,18 +137,18 @@ async def gerar_versao_sig(contexto):
         await contexto.send(f'Iniciando processos para build.')
         await contexto.send(f'Requerente: {nome_usuario}.')
 
-        ambiente = await configurar_ambiente(bot, diretorio_projeto, diretorio_sig)
+        ambiente = await projeto.configurar_ambiente(bot, diretorio_projeto, diretorio_sig)
             
         if ambiente == True: 
            
             await contexto.send(f"Ambiente configurado >>> \n Load versão atual:")
             
-            versao = versionamento(bot, diretorio_json)
+            versao = projeto.versionamento(bot, diretorio_json)
 
             await contexto.send(f"Versão atual: \n\n{versao}")
             
             
-            resultado_gradle_clean, processo_clean = await gradle_clean(bot)
+            resultado_gradle_clean, processo_clean = await projeto.gradle_clean(bot)
             await contexto.send(f"Retorno gradle clean(remove versões geradas anteriormente): \n {resultado_gradle_clean}")
 
             if processo_clean.returncode == 0:
@@ -156,13 +156,13 @@ async def gerar_versao_sig(contexto):
                 await contexto.send(f"\n\nProcesso 'gradle clean' executado com exito >>> ")
                 await contexto.send(f"Iniciando empacotamento da aplicação >>> ")
 
-                resultado_gradle_war, processo_war = await gradle_war(bot)
+                resultado_gradle_war, processo_war = await projeto.gradle_war(bot)
 
                 if processo_war.returncode == 0:
                     
                     await contexto.send(f"\nProcesso de build executado com exito >>> ")
 
-                    fomatado_resultado_gradle_war = await regex_saida_war(bot, str(resultado_gradle_war))
+                    fomatado_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
                     
                     await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
                     await contexto.send(f"{fomatado_resultado_gradle_war}")
@@ -181,7 +181,7 @@ async def upload_war(contexto):
         await contexto.send("Arquivo sig.war não encontrado.")
         return
     
-    task = await upload_arquivo('sig', arquivo_sig)
+    task = await upload.upload_arquivo('sig', arquivo_sig)
 
     await contexto.send(f"Upload concluído. Link \n\n{task}")
 
@@ -243,7 +243,7 @@ async def on_message(message):
                     await message.channel.send(f'Mudando para a branch --> {branch}')
                     
                     processo_checkout = await checkout(branch)
-                    resultado_checkout = await regex_git_checkout(bot, processo_checkout)
+                    resultado_checkout = await regex.regex_git_checkout(bot, processo_checkout)
                     
                     if resultado_checkout.returncode == 0:
 
