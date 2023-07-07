@@ -36,10 +36,10 @@ bot = Bot(
 )
 
 # Diretório do projeto Java
-diretorio_projeto = "C:/prodata/sig"
-diretorio_sig = "C:/prodata/sig/sig"
-arquivo_sig = "C:/prodata/sig/sig/build/libs/sig.war"
-diretorio_json = "C:/prodata/sig/sig/WebContent/version.json"
+diretorio_projeto = "/repo/prodata/sig"
+diretorio_sig = "/repo/prodata/sig/sig"
+arquivo_sig = "/repo/prodata/sig/sig/build/libs/sig.war"
+diretorio_json = "/repo/prodata/sig/sig/WebContent/version.json"
 
 @bot.event
 async def on_ready():
