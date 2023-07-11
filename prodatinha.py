@@ -36,10 +36,10 @@ bot = Bot(
 )
 
 # Diretório do projeto Java
-diretorio_projeto = "/repo/prodata/sig"
-diretorio_sig = "/repo/prodata/sig/sig"
-arquivo_sig = "/repo/prodata/sig/sig/build/libs/sig.war"
-diretorio_json = "/repo/prodata/sig/sig/WebContent/version.json"
+diretorio_projeto = "/repo/sig/"
+diretorio_sig = "/repo/sig/sig/"
+arquivo_sig = "/repo/sig/sig/build/libs/sig.war"
+diretorio_json = "/repo/sig/sig/WebContent/version.json"
 
 @bot.event
 async def on_ready():
@@ -93,14 +93,19 @@ async def status_task() -> None:
     
     except Exception as exception:
         
-        bot.logger.error(f"{funcao_atual} - {exception}")
+        logger.error(f"{funcao_atual} - {exception}")
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send("Comando não encontrado.")
-    else:
-        raise error
+    try:    
+        if isinstance(error, commands.CommandNotFound):
+            await ctx.send("Comando não encontrado.")
+        else:
+            raise error
+    
+    except Exception as exception:
+        
+          logger.error(f"{funcao_atual} - {exception}")
 
 @bot.command(name='branch')
 async def branch(contexto):
@@ -108,21 +113,23 @@ async def branch(contexto):
     funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
-    
+
         os.chdir(diretorio_projeto)
         
         diretorio_atual = os.getcwd()
         arquivos = os.listdir(diretorio_projeto)
 
-        listabranch = (subprocess.run("git branch", capture_output=True, text=True)).stdout.strip()
-
         await contexto.send(f"Diretorio: {diretorio_atual}")
+    
+        listabranch = (subprocess.run(["bash", "-c", "git branch"], capture_output=True, text=True)).stdout.strip()
+        
         await contexto.send(f"Branch atual >>> \n{listabranch}")
+        
         bot.logger.info(f"{funcao_atual} - Branch atual: {listabranch.split()}")
     
     except Exception as exception:
 
-        bot.logerror.error(f"{funcao_atual} - {exception}")
+        bot.logger.error(f"{funcao_atual} - {exception}")
 
 @bot.command(name='gerar-versao-sig')
 async def gerar_versao_sig(contexto):
@@ -171,7 +178,7 @@ async def gerar_versao_sig(contexto):
 
     except Exception as exception:
         
-        bot.logerror.error(f'{funcao_atual} - {exception}') 
+        bot.logger.error(f'{funcao_atual} - {exception}') 
 
 @bot.command(name='upload')
 async def upload_war(contexto):
@@ -259,7 +266,7 @@ async def on_message(message):
 
                     elif resultado_checkout.returncode == 1:
                     
-                        bot.logerror.error(f"{resultado_checkout.stderr}")
+                        bot.logger.error(f"{resultado_checkout.stderr}")
                         await message.channel.send(f"Falha ao alterar a branch - {resultado_checkout.stderr}")
                 
             except Exception as exception:
@@ -281,7 +288,7 @@ async def checkout(branch):
         bot.logger.info(f'Mudando para a branch --> {branch}')
         bot.logger.info(f"Diretorio: {diretorio_atual}")
 
-        mudar_branch = subprocess.run(f"git checkout {branch}", capture_output=True)
+        mudar_branch = subprocess.run(["bash", "-c", f"git checkout {branch}"], capture_output=True)
         mudar_branch = str(mudar_branch)
 
         if mudar_branch.find("Your branch is up to date with"):
@@ -290,6 +297,7 @@ async def checkout(branch):
         return(mudar_branch)
     
     except Exception as exeption:
+        
         bot.logger.error(f"{funcao_atual} - {exeption}")
         return("Erro ao alterar branch")
     

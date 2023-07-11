@@ -55,7 +55,7 @@ async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
             return
 
         # Executa o comando 'git pull' usando a biblioteca subprocess
-        resultado_pull = subprocess.run(['git', 'pull'], capture_output=True, text=True)
+        resultado_pull = subprocess.run(["bash", "-c", 'git', 'pull'], capture_output=True, text=True)
         
         if resultado_pull.returncode == 0:
             # Exibe a saída stdout do comando git pull
@@ -94,7 +94,7 @@ async def gradle_clean(bot):
 
         while True:
 
-            processo = await asyncio.create_subprocess_shell('gradle clean', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            processo = await asyncio.create_subprocess_shell(["bash", "-c", "gradle clean"], stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await processo.communicate()
 
                 # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
@@ -121,7 +121,7 @@ async def gradle_war(bot):
 
         while True:
 
-            processo = await asyncio.create_subprocess_shell('gradle war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            processo = await asyncio.create_subprocess_shell(["bash", "-c", "gradle war"], stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await processo.communicate()
 
                 # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
