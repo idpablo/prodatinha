@@ -36,8 +36,8 @@ bot = Bot(
 )
 
 # Diretório do projeto Java
-diretorio_projeto = "/repo/sig/"
-diretorio_sig = "/repo/sig/sig/"
+diretorio_projeto = "/repo/sig"
+diretorio_sig = "/repo/sig/sig"
 arquivo_sig = "/repo/sig/sig/build/libs/sig.war"
 diretorio_json = "/repo/sig/sig/WebContent/version.json"
 
@@ -150,10 +150,6 @@ async def gerar_versao_sig(contexto):
            
             await contexto.send(f"Ambiente configurado >>> \n Load versão atual:")
             
-            versao = projeto.versionamento(bot, diretorio_json)
-
-            await contexto.send(f"Versão atual: \n\n{versao}")
-            
             
             resultado_gradle_clean, processo_clean = await projeto.gradle_clean(bot)
             await contexto.send(f"Retorno gradle clean(remove versões geradas anteriormente): \n {resultado_gradle_clean}")
@@ -173,8 +169,6 @@ async def gerar_versao_sig(contexto):
                     
                     await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
                     await contexto.send(f"{fomatado_resultado_gradle_war}")
-                    #for linha in fomatado_resultado_gradle_war:
-                        #await contexto.send(f"{linha}")
 
     except Exception as exception:
         

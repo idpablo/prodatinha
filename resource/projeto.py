@@ -47,7 +47,7 @@ async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
         os.chdir(diretorio_projeto)
 
         # Verifica o diretório atual é o diretório correto
-        diretorio_atual = os.getcwd().replace("\\", "/")
+        diretorio_atual = os.getcwd()
         bot.logger.info(f"Diretório atual: {diretorio_atual}")
 
         if diretorio_atual != diretorio_projeto:
@@ -55,14 +55,14 @@ async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
             return
 
         # Executa o comando 'git pull' usando a biblioteca subprocess
-        resultado_pull = subprocess.run(["bash", "-c", 'git', 'pull'], capture_output=True, text=True)
+        resultado_pull = subprocess.run(["bash", "-c", 'git pull'], capture_output=True, text=True)
         
         if resultado_pull.returncode == 0:
             # Exibe a saída stdout do comando git pull
             bot.logger.info(f"Resultado git pull: {resultado_pull.stdout.strip()}")
         else:
             
-            bot.logerror.error(f"Erro ao executar git pull: {resultado_pull.stderr.strip()}")
+            bot.logger.error(f"Erro ao executar git pull: {resultado_pull.stderr.strip()}")
 
         # Verifica se o diretório sig existe
         if not os.path.isdir(diretorio_sig):
@@ -73,7 +73,7 @@ async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
         os.chdir(diretorio_sig)
 
         # Verifica o diretório atual para confirmar se é o diretório correto
-        diretorio_atual_sig = os.getcwd().replace("\\", "/")
+        diretorio_atual_sig = os.getcwd()
         bot.logger.info(f"Diretório atual (sig): {diretorio_atual_sig}")
 
         if diretorio_atual_sig != diretorio_sig:
@@ -83,18 +83,17 @@ async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
         return True;
 
     except Exception as exception:
-        bot.logerror.error(f"funcao_atual - { exception}")
+        bot.logger.error(f"funcao_atual - { exception}")
 
 async def gradle_clean(bot):
     try:
         funcao_atual = inspect.currentframe().f_code.co_name
 
-        saida_build = "Iniciando clean do projeto"
-        bot.logger.info(saida_build)
+        bot.logger.info("Iniciando clean do projeto")
 
         while True:
 
-            processo = await asyncio.create_subprocess_shell(["bash", "-c", "gradle clean"], stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            processo = await asyncio.create_subprocess_exec("gradle clean", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await processo.communicate()
 
                 # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
@@ -109,15 +108,14 @@ async def gradle_clean(bot):
                 bot.logger.error(f"Erro ao executar o gradle clean: {stderr.decode()}")
 
     except Exception as exception:
-        bot.logerror.error(f"{funcao_atual} - {exception}")
+        bot.logger.error(f"{funcao_atual} - {exception}")
         await asyncio.sleep(5)
 
 async def gradle_war(bot):
     try:
         funcao_atual = inspect.currentframe().f_code.co_name
-
-        saida_build = "Iniciando build do projeto"
-        bot.logger.info(saida_build)
+        
+        bot.logger.info("Iniciando build do projeto")
 
         while True:
 
@@ -136,5 +134,5 @@ async def gradle_war(bot):
                 bot.logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")
 
     except Exception as exception:
-        bot.logerror.error(f"{funcao_atual} - {exception}")
+        bot.logger.error(f"{funcao_atual} - {exception}")
         await asyncio.sleep(5)
