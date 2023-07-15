@@ -182,20 +182,11 @@ async def upload_war(contexto):
         await contexto.send("Arquivo sig.war não encontrado.")
         return
     
-    task = await upload.upload_arquivo('sig', arquivo_sig)
+    task = await upload.fazer_upload_arquivo(arquivo_sig, 'sig', 'sig')
 
-    await contexto.send(f"Upload concluído. Link \n\n{task}")
+    url = await upload.obter_url_download('sig', 'sig')
 
-    # Aguardar a conclusão do upload e enviar a mensagem de retorno
-    #if task.exception() is not None:
-        #await contexto.send("Ocorreu um erro durante o upload do arquivo.")
-    #else:
-        #await contexto.send("Upload concluído.")
-
-    #if link_arquivo:
-        #await contexto.send(f"Upload concluído. Aqui está o link do arquivo: {link_arquivo}")
-    #else:
-        #await contexto.send("Ocorreu um erro durante o upload do arquivo.")
+    await contexto.send(f"Upload concluído. Link \n\n{url}")
 
 @bot.command(name='ajuda')
 async def ajuda(contexto):
