@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import re
 import sys
 import json
 import asyncio
@@ -15,9 +16,11 @@ async def reconectar_bot(bot):
     await bot.login(bot.token)
     await bot.connect()
 
-async def versionamento(bot, diretorio_json):
-    
+async def versionamento(bot):
+
     funcao_atual = inspect.currentframe().f_code.co_name
+    
+    diretorio_json = "repo/sig/sig/WebContent/version.json"
 
     try:
 
@@ -25,28 +28,64 @@ async def versionamento(bot, diretorio_json):
             sys.exit("'version.json' não encontrado, adicione e tente novamente.")
         else:
             with open(diretorio_json) as file:
+                
                 version = json.load(file)
 
-                return version
+                versao_atual = version["versaosig"]
+
+                versao = version["versaosig"].split('.')
+                versao_concat = int(versao[2]) + 1
+                versao_concat = str(versao_concat)
+                versaosig = versao[0] +"." + versao[1] + "." + versao_concat
+
+                bot.logger.info(f"Versão Atual: {versaosig}")
+
+                cache_atual = version["cache"]
+                cache = int(version["cache"])
+                cache_novo = cache + 1
+
+                bot.logger.info(f"Cache Atual: {cache_novo}")
+            
+            version['versaosig'] = versaosig
+            version['cache'] = cache_novo
+
+            with open(diretorio_json, 'w') as arquivo:
+                json.dump(version, arquivo, indent=4)
+            
+            return versao_atual, versaosig, cache_atual, cache_novo
     
     except Exception as exception:
 
         bot.logger.error(f"{funcao_atual} - {exception}")
+
+async def substituir_valores():
+    
+    caminho_arquivo = r"C:\prodata\sig\sigpwebfuncoes\src\servico\setup\VersaoSigpWebFuncoes.java"
+
+    nova_versao = "2023.07.05"
+    nova_data = "08/07/2023 - 11:00"
+
+    with open(caminho_arquivo, 'r') as arquivo:
+        conteudo = arquivo.read()
+
+    conteudo = re.sub(r'public static String VERSAO = "[^"]+";', f'public static String VERSAO = "{nova_versao}";', conteudo)
+    conteudo = re.sub(r'public static String DATA = "[^"]+";', f'public static String DATA = "{nova_data}";', conteudo)
+
+    with open(caminho_arquivo, 'w') as arquivo:
+        arquivo.write(conteudo)
+
 
 async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
 
     try:
         funcao_atual = inspect.currentframe().f_code.co_names
 
-        # Verifica se o diretório do projeto existe
         if not os.path.isdir(diretorio_projeto):
             bot.logger.info(f"Diretório inválido: {diretorio_projeto}")
             return
 
-        # Navega até o diretório do projetos
         os.chdir(diretorio_projeto)
 
-        # Verifica o diretório atual é o diretório correto
         diretorio_atual = os.getcwd()
         bot.logger.info(f"Diretório atual: {diretorio_atual}")
 
@@ -54,7 +93,6 @@ async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
             bot.logger.info(f"Diretório incorreto. Esperado: {diretorio_projeto}")
             return
 
-        # Executa o comando 'git pull' usando a biblioteca subprocess
         resultado_pull = subprocess.run(["bash", "-c", 'git pull'], capture_output=True, text=True)
         
         if resultado_pull.returncode == 0:
@@ -64,15 +102,12 @@ async def configurar_ambiente(bot, diretorio_projeto, diretorio_sig):
             
             bot.logger.error(f"Erro ao executar git pull: {resultado_pull.stderr.strip()}")
 
-        # Verifica se o diretório sig existe
         if not os.path.isdir(diretorio_sig):
             bot.logger.info(f"Diretório inválido: {diretorio_sig}")
             return
 
-        # Navega até o diretório sig
         os.chdir(diretorio_sig)
 
-        # Verifica o diretório atual para confirmar se é o diretório correto
         diretorio_atual_sig = os.getcwd()
         bot.logger.info(f"Diretório atual (sig): {diretorio_atual_sig}")
 
@@ -96,14 +131,13 @@ async def gradle_clean(bot):
             processo = await asyncio.create_subprocess_exec("gradle clean", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await processo.communicate()
 
-                # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
             while processo.returncode is None:
                 bot.logger.info("Executando o processo...")
-                await asyncio.sleep(10)  # Exibe uma mensagem a cada 10 segundos
+                await asyncio.sleep(10)  
 
             if processo.returncode == 0:
                 bot.logger.info(f"Saida do gradle clean: {stdout.decode()}")
-                return stdout.decode(), processo
+                return processo
             else:
                 bot.logger.error(f"Erro ao executar o gradle clean: {stderr.decode()}")
 
@@ -113,6 +147,11 @@ async def gradle_clean(bot):
 
 async def gradle_war(bot):
     try:
+        
+        while processo.returncode is None:
+                bot.logger.info("Executando o processo...")
+                await asyncio.sleep(10) 
+
         funcao_atual = inspect.currentframe().f_code.co_name
         
         bot.logger.info("Iniciando build do projeto")
@@ -122,17 +161,46 @@ async def gradle_war(bot):
             processo = await asyncio.create_subprocess_shell(["bash", "-c", "gradle war"], stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await processo.communicate()
 
-                # Loop para exibir mensagens de progresso enquanto o processo estiver em andamento
-            while processo.returncode is None:
-                bot.logger.info("Executando o processo...")
-                await asyncio.sleep(10)  # Exibe uma mensagem a cada 10 segundos
-
             if processo.returncode == 0:
                 saida_build = stdout.decode()
-                return stdout.decode(), processo
+                return processo
             else:
                 bot.logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")
 
     except Exception as exception:
         bot.logger.error(f"{funcao_atual} - {exception}")
         await asyncio.sleep(5)
+
+
+async def compactar_arquivo(bot, caminho_arquivo, nome_arquivo):
+
+    try:
+
+        os.chdir(caminho_arquivo)
+
+        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/sig"):
+
+            bot.logger.error("'sig' não encontrado, adicione e tente novamente.")
+        
+        else:
+
+            processo = await asyncio.create_subprocess_shell(["bash", "-c", f"mv sig sig.war"], stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await processo.communicate()
+
+
+        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/sig.war"):
+
+            bot.logger.error("'sig.war' não encontrado, adicione e tente novamente.")
+
+        else:
+
+            processo = await asyncio.create_subprocess_shell(["bash", "-c", f"rar a {nome_arquivo} sig.war "], stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await processo.communicate()
+
+            if stdout.returncode == 0:
+                
+                bot.logger.info("Processo de compactação finalizado...")
+
+    except Exception as exception:
+         
+         bot.logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")

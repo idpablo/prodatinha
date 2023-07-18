@@ -1,56 +1,28 @@
 #!/usr/bin/python3
 
 import os
-import json
+import inspect
 import asyncio
-
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
-from googleapiclient.http import MediaFileUpload
 
 import util.logger as logger
 
 logger = logger.setup_logger("upload.py", "discord.log")
-diretorio_credenciais = 'C:/prodata/python/prodatinha/config/prodatinha-6da2bc4e0f96.json'
 
-async def upload_arquivo(nome_arquivo, arquivo_sig):
+async def fazer_upload_arquivo(diretorio_arquivo, nome):
+
+    funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
-        credenciais = service_account.Credentials.from_service_account_file(
-            diretorio_credenciais,
-            scopes=['https://www.googleapis.com/auth/drive']
-        )
 
-        servico_drive = build('drive', 'v3', credentials=credenciais)
+        os.chdir(diretorio_arquivo, nome)
 
-        metadados_arquivo = {
-            'name': nome_arquivo, 
-        }
-        
-        media = MediaFileUpload(arquivo_sig, resumable=True)
-        
-        while True:
+        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/{nome}"):
+             logger.info("'config.json' não encontrado, adicione e tente novamente.")
+        else:
             
-            processo_upload = asyncio.create_task(servico_drive.files().create(
-                body=metadados_arquivo,
-                media_body=media,
-                fields='id', 
-            ).execute())
-
-            resultado_upload = await processo_upload.communicate()
-
-            return resultado_upload
-            
-        # Obtendo o ID do arquivo enviado
-        id_arquivo = resultado_upload['id']
-
-        link_arquivo = servico_drive.files().get(fileId=id_arquivo, fields='webViewLink').execute()
-
-        link_arquivo = link_arquivo['webViewLink']
-
-        logger.info(f'Upload concluído. ID do arquivo: {link_arquivo}')
-
-        return link_arquivo
+            processo = await asyncio.create_subprocess_shell('"curl -u "pablosoares:Devflag#8591" -T "/repo/sig/sig/build/libs/SIG-v2.5.199-22-06-2023.rar" "https://owncloud.prodataweb.inf.br/owncloud/index.php/apps/files?dir=/Versoes_Anteriores"', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await processo.communicate()
 
     except Exception as exception:
-        logger.error(f"{exception}")
+       
+        logger.error(f"{funcao_atual} - {exception}")

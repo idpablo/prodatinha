@@ -2,6 +2,7 @@
 
 import subprocess
 import platform
+import asyncio
 import inspect
 import discord
 import random
@@ -38,7 +39,9 @@ bot = Bot(
 # Diretório do projeto Java
 diretorio_projeto = "/repo/sig"
 diretorio_sig = "/repo/sig/sig"
-arquivo_sig = "/repo/sig/sig/build/libs/sig.war"
+diretorio_funcoes = "/repo/sig/sigpwebfuncoes"
+arquivo_sig = "/repo/sig/sig/build/libs/"
+arquivo_funcoes = "/repo/sig/sigpwebfuncoes/build/libs/"
 diretorio_json = "/repo/sig/sig/WebContent/version.json"
 
 @bot.event
@@ -134,7 +137,7 @@ async def branch(contexto):
 @bot.command(name='gerar-versao-sig')
 async def gerar_versao_sig(contexto):
 
-    await bot.change_presence(activity=discord.Game('Versão sendo gerada!'))
+    await bot.change_presence(activity=discord.Game('Versão sig sendo gerada!'))
  
     funcao_atual = inspect.currentframe().f_code.co_name
     nome_usuario = contexto.author.name
@@ -150,16 +153,32 @@ async def gerar_versao_sig(contexto):
            
             await contexto.send(f"Ambiente configurado >>> \n Load versão atual:")
             
+            versao = await projeto.versionamento(bot)
+
+            await contexto.send(f"Versão atual: {versao[0]}")
+            await contexto.send(f"Versão que sera gerada: {versao[1]}")
+
+            await contexto.send(f"Cache atual: {versao[2]}")
+            await contexto.send(f"Cache atual da versão que sera gerada: {versao[3]}")
             
             resultado_gradle_clean, processo_clean = await projeto.gradle_clean(bot)
-            await contexto.send(f"Retorno gradle clean(remove versões geradas anteriormente): \n {resultado_gradle_clean}")
-
+            
+            while processo_clean.returncode is None:
+                bot.logger.info("Procesando...")
+                await contexto.send("Executando o processo...")
+                await asyncio.sleep(3)
+            
             if processo_clean.returncode == 0:
                 
                 await contexto.send(f"\n\nProcesso 'gradle clean' executado com exito >>> ")
                 await contexto.send(f"Iniciando empacotamento da aplicação >>> ")
 
-                resultado_gradle_war, processo_war = await projeto.gradle_war(bot)
+                processo_war = await projeto.gradle_war(bot)
+
+                while processo_war.returncode is None:
+                    bot.logger.info("Procesando...")
+                    await contexto.send("Executando o processo...")
+                    await asyncio.sleep(3) 
 
                 if processo_war.returncode == 0:
                     
@@ -170,6 +189,63 @@ async def gerar_versao_sig(contexto):
                     await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
                     await contexto.send(f"{fomatado_resultado_gradle_war}")
 
+                    projeto.compactar_arquivo(bot, arquivo_sig, f"SIG-{versao[1]}")
+
+    except Exception as exception:
+        
+        bot.logger.error(f'{funcao_atual} - {exception}') 
+
+@bot.command(name='gerar-versao-funcoes')
+async def gerar_versao_sig(contexto):
+
+    await bot.change_presence(activity=discord.Game('Versão sig sendo gerada!'))
+ 
+    funcao_atual = inspect.currentframe().f_code.co_name
+    nome_usuario = contexto.author.name
+    
+    try:
+        
+        await contexto.send(f'Iniciando processos para build funcoes.')
+        await contexto.send(f'Requerente: {nome_usuario}.')
+
+        ambiente = await projeto.configurar_ambiente(bot, diretorio_projeto, diretorio_funcoes)
+            
+        if ambiente == True: 
+           
+            await contexto.send(f"Ambiente configurado >>>")
+    
+            processo_clean = await projeto.gradle_clean(bot)
+            
+            while processo_clean.returncode is None:
+                bot.logger.info("Procesando...")
+                await contexto.send("Executando o processo...")
+                await asyncio.sleep(3)
+            
+            if processo_clean.returncode == 0:
+                
+                await contexto.send(f"\n\nProcesso 'gradle clean' executado com exito >>> ")
+                await contexto.send(f"Iniciando empacotamento da aplicação >>> ")
+
+                processo_war = await projeto.gradle_war(bot)
+
+                while processo_war.returncode is None:
+                    bot.logger.info("Procesando...")
+                    await contexto.send("Executando o processo...")
+                    await asyncio.sleep(3) 
+
+                if processo_war.returncode == 0:
+                    
+                    await contexto.send(f"\nProcesso de build executado com exito >>> ")
+
+                    fomatado_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
+                    
+                    await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
+                    await contexto.send(f"{fomatado_resultado_gradle_war}")
+
+                    nome = "teste"
+
+                    projeto.compactar_arquivo(bot, arquivo_funcoes, f"{nome}")
+
     except Exception as exception:
         
         bot.logger.error(f'{funcao_atual} - {exception}') 
@@ -177,16 +253,23 @@ async def gerar_versao_sig(contexto):
 @bot.command(name='upload')
 async def upload_war(contexto):
 
-    # Verificar se o arquivo existe
-    if not os.path.isfile(arquivo_sig):
-        await contexto.send("Arquivo sig.war não encontrado.")
-        return
-    
-    task = await upload.fazer_upload_arquivo(arquivo_sig, 'sig', 'sig')
+    funcao_atual = inspect.currentframe().f_code.co_name
 
-    url = await upload.obter_url_download('sig', 'sig')
+    try:
+        await contexto.send(f"\nIniciando Upload: \n\n")
 
-    await contexto.send(f"Upload concluído. Link \n\n{url}")
+        if not os.path.isfile(arquivo_sig):
+            await contexto.send("Arquivo sig.war não encontrado.")
+            return
+        else:
+
+            task = await upload.fazer_upload_arquivo(arquivo_sig, 'sig', 'sig')
+
+            await contexto.send(f"Upload concluído. Link \n\n{task}")
+
+    except Exception as exception:
+
+        bot.logger.error(f'{funcao_atual} - {exception}') 
 
 @bot.command(name='ajuda')
 async def ajuda(contexto):
@@ -207,10 +290,8 @@ async def on_message(message):
 
     from util.traduzir import traduzir_texto
 
-    # Verifica se a mensagem foi enviada por um usuário (exclui mensagens do próprio bot)
     if message.author != bot.user:
 
-        # Acessa o conteúdo da mensagem
         conteudo = message.content
 
         bot.logger.info(f"Conteudo: {conteudo}")
@@ -258,7 +339,6 @@ async def on_message(message):
 
                 bot.logger.error(f"{funcao_atual} - {exception}")
        
-    # Permite que o bot continue processando outros comandos
     await bot.process_commands(message)
     
 async def checkout(branch):
