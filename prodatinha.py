@@ -8,6 +8,7 @@ import discord
 import random
 import os
 
+from datetime import datetime
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.errors import GatewayNotFound
@@ -100,6 +101,9 @@ async def status_task() -> None:
 
 @bot.event
 async def on_command_error(ctx, error):
+    
+    funcao_atual = inspect.currentframe().f_code.co_name
+
     try:    
         if isinstance(error, commands.CommandNotFound):
             await ctx.send("Comando não encontrado.")
@@ -137,31 +141,33 @@ async def branch(contexto):
 @bot.command(name='gerar-versao-sig')
 async def gerar_versao_sig(contexto):
 
-    await bot.change_presence(activity=discord.Game('Versão sig sendo gerada!'))
+    await bot.change_presence(activity=discord.Game('Build da aplicação Sig iniciada!'))
  
     funcao_atual = inspect.currentframe().f_code.co_name
     nome_usuario = contexto.author.name
     
     try:
         
-        await contexto.send(f'Iniciando processos para build.')
+        await contexto.send(f'Iniciando processos para build...')
         await contexto.send(f'Requerente: {nome_usuario}.')
 
         ambiente = await projeto.configurar_ambiente(bot, diretorio_projeto, diretorio_sig)
             
         if ambiente == True: 
            
-            await contexto.send(f"Ambiente configurado >>> \n Load versão atual:")
+            await contexto.send(f"Ambiente configurado!")
             
-            versao = await projeto.versionamento(bot)
+            versao = await projeto.versionamento_sig(bot)
 
             await contexto.send(f"Versão atual: {versao[0]}")
             await contexto.send(f"Versão que sera gerada: {versao[1]}")
 
             await contexto.send(f"Cache atual: {versao[2]}")
             await contexto.send(f"Cache atual da versão que sera gerada: {versao[3]}")
+
+            await contexto.send(f"Iniciando Clean do repositorio... \nApagando as versões geradas anteriormente...")
             
-            resultado_gradle_clean, processo_clean = await projeto.gradle_clean(bot)
+            processo_clean = await projeto.gradle_clean(bot)
             
             while processo_clean.returncode is None:
                 bot.logger.info("Procesando...")
@@ -170,26 +176,27 @@ async def gerar_versao_sig(contexto):
             
             if processo_clean.returncode == 0:
                 
-                await contexto.send(f"\n\nProcesso 'gradle clean' executado com exito >>> ")
-                await contexto.send(f"Iniciando empacotamento da aplicação >>> ")
+                await contexto.send(f"\n\nProcesso 'gradle clean' executado com êxito.")
 
-                processo_war = await projeto.gradle_war(bot)
+                await contexto.send(f"Iniciando empacotamento da aplicação... ")
+                await contexto.send(f"\nProcesso de build executado com êxito!")
 
-                while processo_war.returncode is None:
-                    bot.logger.info("Procesando...")
-                    await contexto.send("Executando o processo...")
-                    await asyncio.sleep(3) 
+                resultado_gradle_war, processo_war = await projeto.gradle_war(bot)
+                fomatado_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
+                
+                await contexto.send(f"\nSaida gradle war(Processo que gera o pacote .war): \n\n")
+                await contexto.send(f"{fomatado_resultado_gradle_war}")
 
-                if processo_war.returncode == 0:
-                    
-                    await contexto.send(f"\nProcesso de build executado com exito >>> ")
+                data_atual = datetime.now()
+                data_formatada = data_atual.strftime("%d-%m-%y")
 
-                    fomatado_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
-                    
-                    await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
-                    await contexto.send(f"{fomatado_resultado_gradle_war}")
+                await contexto.send(f" \nProcesso de Iniciado...")
 
-                    projeto.compactar_arquivo(bot, arquivo_sig, f"SIG-{versao[1]}")
+                compactar_versao =projeto.compactar_arquivo(bot, arquivo_sig, f"SIG-{versao[1]}")
+
+                if compactar_versao:
+
+                    await contexto.send(f"Processo de compactação finalizado!")
 
     except Exception as exception:
         
@@ -198,7 +205,9 @@ async def gerar_versao_sig(contexto):
 @bot.command(name='gerar-versao-funcoes')
 async def gerar_versao_sig(contexto):
 
-    await bot.change_presence(activity=discord.Game('Versão sig sendo gerada!'))
+    await bot.change_presence(activity=discord.Game('Build da aplicação Funções iniciada!'))
+
+    await projeto.versionamento_funcoes(bot)
  
     funcao_atual = inspect.currentframe().f_code.co_name
     nome_usuario = contexto.author.name

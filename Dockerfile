@@ -6,7 +6,8 @@ COPY dependencias.txt .
 
 RUN apt-get update && apt-get install -y tzdata && apt-get install -y python3 \
     && apt-get install -y python3-pip && apt-get install -y git \
-    && apt-get install -y nodejs && apt-get install -y npm
+    && apt-get install -y nodejs && apt-get install -y npm \
+    && apt-get install -y gradle
 
 RUN pip install -r dependencias.txt
 RUN npm install -g grunt-cli -opcoes -C /repo/sig/sig/WebContent 
