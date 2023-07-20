@@ -57,7 +57,7 @@ async def regex_git_checkout(bot, texto):
         stdout = stdout_match.group(1) if stdout_match else ""
 
         stderr_match = re.search(r"stderr=b\"(.*?)\"", texto)
-        stderr = stderr_match.group(1) if stderr_match else ""
+        stderr = stderr_match.group(1).replace("\\n", "") if stderr_match else ""
 
         return ResultadoRegex(args, returncode, stdout, stderr)
 

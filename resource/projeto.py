@@ -11,11 +11,30 @@ import subprocess
 from datetime import datetime
 import util.traduzir as traduzir
 
-async def reconectar_bot(bot):
+async def checkout(bot, branch, diretorio_projeto):
     
-    bot.logger.info("Reconectando o bot...")
-    await bot.login(bot.token)
-    await bot.connect()
+    try:
+
+        funcao_atual = inspect.currentframe().f_code.co_name
+
+        os.chdir(diretorio_projeto)
+        diretorio_atual = os.getcwd()
+
+        bot.logger.info(f'Mudando para a branch --> {branch}')
+        bot.logger.info(f"Diretorio: {diretorio_atual}")
+
+        mudar_branch = subprocess.run(["bash", "-c", f"git checkout {branch}"], capture_output=True)
+        mudar_branch = str(mudar_branch)
+
+        if mudar_branch.find("Your branch is up to date with"):
+            bot.logger.info("Branch Alterada com sucesso!")
+
+        return(mudar_branch)
+    
+    except Exception as exeption:
+        
+        bot.logger.error(f"{funcao_atual} - {exeption}")
+        return("Erro ao alterar branch")
 
 async def versionamento_sig(bot):
 
@@ -173,36 +192,37 @@ async def gradle_war(bot):
 
 async def compactar_arquivo(bot, caminho_arquivo, nome_arquivo):
 
+    funcao_atual = inspect.currentframe().f_code.co_name
+
     try:
 
-        data_atual = datetime.now()
-        data_formatada = data_atual.strftime("%d-%m-%Y")
+        bot.logger.info(f"{funcao_atual} - caminho recebido: {caminho_arquivo}")
+        bot.logger.info(f"{funcao_atual} - nome arquivo recebido: {nome_arquivo}")
 
         os.chdir(caminho_arquivo)
+        diretorio_atual = os.getcwd()
 
-        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/sig"):
+        bot.logger.info(f"{funcao_atual} - diretorio atual: {diretorio_atual}")
 
-            bot.logger.error("'sig' não encontrado, adicione e tente novamente.")
+        if os.path.exists("sig"):
+
+            os.rename("sig", "sig.war")
         
-        else:
+        elif os.path.exists("sig.war"):
 
-            processo = subprocess.run(["bash", "-c", 'mv sig sig.war"'], capture_output=True, text=True)
-
-        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/sig.war"):
-
-            bot.logger.error("'sig.war' não encontrado, adicione e tente novamente.")
-
-        else:
-
-            processo = await asyncio.create_subprocess_shell(f"rar a {nome_arquivo}-{data_formatada} sig.war ", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            processo = await asyncio.create_subprocess_shell(f"rar a {nome_arquivo}.rar sig.war ", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await processo.communicate()
 
-            if stdout.returncode == 0:
+            if processo.returncode == 0:
                 
-                bot.logger.info("Processo de compactação finalizado...")
+                bot.logger.info("Processo de compactação finalizado!")
 
                 return True
 
+        else:
+
+            bot.logger.error("'sig.war' não encontrado, adicione e tente novamente.")
+
     except Exception as exception:
          
-         bot.logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")
+         bot.logger.error(f"{funcao_atual} - {exception}")

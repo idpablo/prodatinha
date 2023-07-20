@@ -41,7 +41,7 @@ bot = Bot(
 diretorio_projeto = "/repo/sig"
 diretorio_sig = "/repo/sig/sig"
 diretorio_funcoes = "/repo/sig/sigpwebfuncoes"
-arquivo_sig = "/repo/sig/sig/build/libs/"
+arquivo_sig = "/repo/sig/sig/build/libs"
 arquivo_funcoes = "/repo/sig/sigpwebfuncoes/build/libs/"
 diretorio_json = "/repo/sig/sig/WebContent/version.json"
 
@@ -53,7 +53,6 @@ async def on_ready():
     bot.logger.info(f"Versão Python: {platform.python_version()}")
     bot.logger.info(f"Rodando na plataforma: {platform.system()} {platform.release()} ({os.name})")
     bot.logger.info("-------------------")
-    status_task.start()
 
     if config["sync_commands_globally"]:
         bot.logger.info("Sincronizado com comandos globais...\n")
@@ -148,7 +147,7 @@ async def gerar_versao_sig(contexto):
     
     try:
         
-        await contexto.send(f'Iniciando processos para build...')
+        await contexto.send(f'**Iniciando processos para build...**')
         await contexto.send(f'Requerente: {nome_usuario}.')
 
         ambiente = await projeto.configurar_ambiente(bot, diretorio_projeto, diretorio_sig)
@@ -159,15 +158,17 @@ async def gerar_versao_sig(contexto):
             
             versao = await projeto.versionamento_sig(bot)
 
-            await contexto.send(f"Versão atual: {versao[0]}")
-            await contexto.send(f"Versão que sera gerada: {versao[1]}")
+            await contexto.send(f"Versão atual: {versao[0]}\n     └> Versão que sera gerada: {versao[1]}")
 
-            await contexto.send(f"Cache atual: {versao[2]}")
-            await contexto.send(f"Cache atual da versão que sera gerada: {versao[3]}")
-
-            await contexto.send(f"Iniciando Clean do repositorio... \nApagando as versões geradas anteriormente...")
+            await contexto.send(f"Cache atual: {versao[2]}\n     └> Cache atual da versão que sera gerada: {versao[3]}")      
+    
+            await contexto.send(f"Iniciando Clean do repositorio...\n     └> Apagando as versões geradas anteriormente...")
             
             processo_clean = await projeto.gradle_clean(bot)
+            stdout, stderr = await processo_clean.communicate()
+
+            bot.logger.info(f'{funcao_atual} - stdout:{stdout}')
+            bot.logger.info(f'{funcao_atual} - stderr:{stderr}')
             
             while processo_clean.returncode is None:
                 bot.logger.info("Procesando...")
@@ -176,27 +177,34 @@ async def gerar_versao_sig(contexto):
             
             if processo_clean.returncode == 0:
                 
-                await contexto.send(f"\n\nProcesso 'gradle clean' executado com êxito.")
-
-                await contexto.send(f"Iniciando empacotamento da aplicação... ")
-                await contexto.send(f"\nProcesso de build executado com êxito!")
+                await contexto.send(f"Processo 'gradle clean' executado com êxito! \n\nIniciando empacotamento da aplicação...")
 
                 resultado_gradle_war, processo_war = await projeto.gradle_war(bot)
                 fomatado_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
-                
-                await contexto.send(f"\nSaida gradle war(Processo que gera o pacote .war): \n\n")
-                await contexto.send(f"{fomatado_resultado_gradle_war}")
+
+                while processo_clean.returncode is None:
+                    bot.logger.info("Procesando...")
+                    await contexto.send("Executando o processo...")
+                    await asyncio.sleep(3)
+
+                if processo_war.returncode == 0:
+
+                    await contexto.send(f"Processo de build executado com êxito! \nSaida gradle war(Processo que gera o pacote .war): \n     └> {fomatado_resultado_gradle_war}")
+
+                await contexto.send(f" \nProcesso de compactação Iniciado...")
 
                 data_atual = datetime.now()
-                data_formatada = data_atual.strftime("%d-%m-%y")
+                data_formatada = data_atual.strftime("%d-%m-%Y")
+                nome_sig = f"SIG-{versao[1]}-{data_formatada}"
 
-                await contexto.send(f" \nProcesso de Iniciado...")
-
-                compactar_versao =projeto.compactar_arquivo(bot, arquivo_sig, f"SIG-{versao[1]}")
+                compactar_versao = await projeto.compactar_arquivo(bot, arquivo_sig, f"{nome_sig}")
 
                 if compactar_versao:
-
+                    
                     await contexto.send(f"Processo de compactação finalizado!")
+                else:
+
+                    await contexto.send(f"Processo de compactação não foi realizado!")
 
     except Exception as exception:
         
@@ -245,19 +253,42 @@ async def gerar_versao_sig(contexto):
                 if processo_war.returncode == 0:
                     
                     await contexto.send(f"\nProcesso de build executado com exito >>> ")
-
-                    fomatado_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
                     
                     await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
-                    await contexto.send(f"{fomatado_resultado_gradle_war}")
+                    # await contexto.send(f"{fomatado_resultado_gradle_war}") 
 
-                    nome = "teste"
+                    data_atual = datetime.now()
+                    data_formatada = data_atual.strftime("%d-%m-%Y")
+                    nome_funcoes = f"Funcao-v.{data_formatada}"
 
-                    projeto.compactar_arquivo(bot, arquivo_funcoes, f"{nome}")
+                    compactar_versao = await projeto.compactar_arquivo(bot, arquivo_sig, nome_funcoes)
+
+                if compactar_versao:
+
+                    await contexto.send(f"Processo de compactação finalizado!")
 
     except Exception as exception:
         
         bot.logger.error(f'{funcao_atual} - {exception}') 
+
+@bot.command(name='compactar')
+async def compactar(contexto):
+
+    funcao_atual = inspect.currentframe().f_code.co_name
+
+    try:
+
+        versao = "2.5.235"
+       
+        compactar_versao = await projeto.compactar_arquivo(bot, arquivo_sig, f"SIG-{versao}")
+
+        if compactar_versao:
+
+            await contexto.send(f"Processo de compactação finalizado!")
+
+    except Exception as exception:
+
+        bot.logger.error(f'{funcao_atual} - {exception}')
 
 @bot.command(name='upload')
 async def upload_war(contexto):
@@ -322,22 +353,17 @@ async def on_message(message):
                     branch = partes[1]
                     
                     await message.channel.send('\nCheckout iniciado...')
-                    await message.channel.send(f'Mudando para a branch --> {branch}')
+                    await message.channel.send(f'Mudando para a branch:\n     └> {branch}')
                     
-                    processo_checkout = await checkout(branch)
+                    processo_checkout = await projeto.checkout(bot, branch, diretorio_projeto)
                     resultado_checkout = await regex.regex_git_checkout(bot, processo_checkout)
                     
                     if resultado_checkout.returncode == 0:
 
-                        bot.logger.info(f"{funcao_atual} - Args: {resultado_checkout.args}")
-                        bot.logger.info(f"{funcao_atual} - Returncode: {resultado_checkout.returncode}")
                         bot.logger.info(f"{funcao_atual} - Stderr: {resultado_checkout.stderr}")
 
-                        traducao = resultado_checkout.stderr
-                        traducao = await traduzir_texto(traducao.strip(), destino='pt')
-                        await message.channel.send(f"Processamento sendo executado --> {resultado_checkout.args}")
-                        await message.channel.send(f"Branch Alterada --> {traducao}\n\n")
-                        await message.channel.send("\nSucesso na alteração da branch!")
+                        await message.channel.send(f"Branch Alterada:\n     └> {resultado_checkout.stderr}\n\n")
+                        await message.channel.send("Sucesso na alteração da branch!")
 
                     elif resultado_checkout.returncode == 1:
                     
@@ -350,32 +376,10 @@ async def on_message(message):
        
     await bot.process_commands(message)
     
-async def checkout(branch):
-    
-    try:
-
-        funcao_atual = inspect.currentframe().f_code.co_name
-
-        os.chdir(diretorio_projeto)
-        diretorio_atual = os.getcwd()
-
-        bot.logger.info(f'Mudando para a branch --> {branch}')
-        bot.logger.info(f"Diretorio: {diretorio_atual}")
-
-        mudar_branch = subprocess.run(["bash", "-c", f"git checkout {branch}"], capture_output=True)
-        mudar_branch = str(mudar_branch)
-
-        if mudar_branch.find("Your branch is up to date with"):
-            bot.logger.info("Branch Alterada com sucesso!")
-
-        return(mudar_branch)
-    
-    except Exception as exeption:
-        
-        bot.logger.error(f"{funcao_atual} - {exeption}")
-        return("Erro ao alterar branch")
-    
 try:
+
     bot.run(config["token"])
+
 except GatewayNotFound as exeption:
+
     bot.logger.warnning(f"{exeption}")
