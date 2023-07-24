@@ -42,7 +42,7 @@ diretorio_projeto = "/repo/sig"
 diretorio_sig = "/repo/sig/sig"
 diretorio_funcoes = "/repo/sig/sigpwebfuncoes"
 arquivo_sig = "/repo/sig/sig/build/libs"
-arquivo_funcoes = "/repo/sig/sigpwebfuncoes/build/libs/"
+arquivo_funcoes = "/repo/sig/sigpwebfuncoes/build/libs"
 diretorio_json = "/repo/sig/sig/WebContent/version.json"
 
 @bot.event
@@ -148,7 +148,7 @@ async def gerar_versao_sig(contexto):
     try:
         
         await contexto.send(f'**Iniciando processos para build...**')
-        await contexto.send(f'Requerente: {nome_usuario}.')
+        await contexto.send(f'Requerente: **{nome_usuario}**')
 
         ambiente = await projeto.configurar_ambiente(bot, diretorio_projeto, diretorio_sig)
             
@@ -164,108 +164,149 @@ async def gerar_versao_sig(contexto):
     
             await contexto.send(f"Iniciando Clean do repositorio...\n     └> Apagando as versões geradas anteriormente...")
             
-            processo_clean = await projeto.gradle_clean(bot)
-            stdout, stderr = await processo_clean.communicate()
-
-            bot.logger.info(f'{funcao_atual} - stdout:{stdout}')
-            bot.logger.info(f'{funcao_atual} - stderr:{stderr}')
+            processando_clean = asyncio.create_task(projeto.gradle_clean(bot))
             
-            while processo_clean.returncode is None:
-                bot.logger.info("Procesando...")
+            while not processando_clean.done():
+                bot.logger.info("Processando...")
                 await contexto.send("Executando o processo...")
                 await asyncio.sleep(3)
+
+            resultado_clean = await processando_clean
             
-            if processo_clean.returncode == 0:
+            if resultado_clean.returncode == 0:
                 
-                await contexto.send(f"Processo 'gradle clean' executado com êxito! \n\nIniciando empacotamento da aplicação...")
+                await contexto.send(f"Processo 'gradle clean' executado com êxito! \n\nIniciando empacotamento da aplicação...\n     └> Gerando build do projeto sig.")
 
-                resultado_gradle_war, processo_war = await projeto.gradle_war(bot)
-                fomatado_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
+                processando_war = asyncio.create_task(projeto.gradle_war(bot))
 
-                while processo_clean.returncode is None:
-                    bot.logger.info("Procesando...")
-                    await contexto.send("Executando o processo...")
-                    await asyncio.sleep(3)
+                await status_processamento(bot, contexto, processando_war, 120)
+                
+                resultado_gradle_war, processo_war = await processando_war
+
+                formata_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
 
                 if processo_war.returncode == 0:
 
-                    await contexto.send(f"Processo de build executado com êxito! \nSaida gradle war(Processo que gera o pacote .war): \n     └> {fomatado_resultado_gradle_war}")
+                    await contexto.send(f"Processo de build executado com êxito! \nSaida gradle war(Processo que gera o pacote .war): \n     └> {formata_resultado_gradle_war}")
 
                 await contexto.send(f" \nProcesso de compactação Iniciado...")
 
                 data_atual = datetime.now()
                 data_formatada = data_atual.strftime("%d-%m-%Y")
                 nome_sig = f"SIG-{versao[1]}-{data_formatada}"
+                nome_sig = str(nome_sig)
 
-                compactar_versao = await projeto.compactar_arquivo(bot, arquivo_sig, f"{nome_sig}")
+                processando_compactar_versao = asyncio.create_task(projeto.compactar_arquivo(bot, arquivo_sig, nome_sig))
 
-                if compactar_versao:
-                    
+                await status_processamento(bot, contexto, processando_compactar_versao, 30)
+
+                processo_compactacao = await processando_compactar_versao
+
+                if processo_compactacao:
+
                     await contexto.send(f"Processo de compactação finalizado!")
-                else:
+                    bot.logger.info(f"Processo de compactação finalizado!")
 
-                    await contexto.send(f"Processo de compactação não foi realizado!")
+                    await contexto.send(f"\nIniciando upload. \n\n")
+
+                    processando_upload_arquivo = asyncio.create_task(projeto.disponibilizar_arquivo(bot, arquivo_sig, "sig"))
+
+                    processo_upload = await processando_upload_arquivo
+
+                    if processo_upload:
+
+                        await contexto.send(f"Processo de upload finalizado!")
+                        bot.logger.info(f"Processo de upload não foi realizado!")
+                    else:
+
+                        await contexto.send(f"ERROR - upload não foi realizado!")
+                        bot.logger.info(f"Processo de upload não foi realizado!")
+
 
     except Exception as exception:
         
         bot.logger.error(f'{funcao_atual} - {exception}') 
 
 @bot.command(name='gerar-versao-funcoes')
-async def gerar_versao_sig(contexto):
+async def gerar_versao_funcoes(contexto):
 
     await bot.change_presence(activity=discord.Game('Build da aplicação Funções iniciada!'))
-
-    await projeto.versionamento_funcoes(bot)
  
     funcao_atual = inspect.currentframe().f_code.co_name
     nome_usuario = contexto.author.name
+
+    await contexto.send('Deseja alterar a versão do funções? \n     └> Por favor, digite "sim" para iniciar o processo.')
+
+    def check(m):
+        return m.channel == contexto.channel and m.author == contexto.author and m.content.lower() == 'sim'
+
+    try:
+        resposta = await bot.wait_for('message', check=check, timeout=60)  # Timeout de 60 segundos
+
+        await contexto.send('Iniciando o processo...')
+
+    except asyncio.TimeoutError:
+        
+        await contexto.send('Tempo limite expirado. O processo não foi iniciado.')
     
     try:
         
-        await contexto.send(f'Iniciando processos para build funcoes.')
-        await contexto.send(f'Requerente: {nome_usuario}.')
+        await contexto.send(f'**Iniciando processos para build...**')
+        await contexto.send(f'Requerente: **{nome_usuario}**')
 
         ambiente = await projeto.configurar_ambiente(bot, diretorio_projeto, diretorio_funcoes)
             
         if ambiente == True: 
            
-            await contexto.send(f"Ambiente configurado >>>")
+            await contexto.send(f"Ambiente configurado!") 
     
-            processo_clean = await projeto.gradle_clean(bot)
+            await contexto.send(f"Iniciando Clean do repositorio...\n     └> Apagando as versões geradas anteriormente...")
             
-            while processo_clean.returncode is None:
-                bot.logger.info("Procesando...")
+            processando_clean = asyncio.create_task(projeto.gradle_clean(bot))
+
+            bot.logger.info(f"Processo Clean: {processando_clean}")
+            
+            while not processando_clean.done():
+                bot.logger.info("Processando...")
                 await contexto.send("Executando o processo...")
                 await asyncio.sleep(3)
+
+            resultado_clean = await processando_clean
             
-            if processo_clean.returncode == 0:
+            if resultado_clean.returncode == 0:
                 
-                await contexto.send(f"\n\nProcesso 'gradle clean' executado com exito >>> ")
-                await contexto.send(f"Iniciando empacotamento da aplicação >>> ")
+                await contexto.send(f"Processo 'gradle clean' executado com êxito! \n\nIniciando empacotamento da aplicação...\n     └> Gerando build do projeto sig.")
 
-                processo_war = await projeto.gradle_war(bot)
+                processando_war = asyncio.create_task(projeto.gradle_war(bot))
 
-                while processo_war.returncode is None:
-                    bot.logger.info("Procesando...")
+                while not processando_war.done():
+                    bot.logger.info("Processando...")
                     await contexto.send("Executando o processo...")
-                    await asyncio.sleep(3) 
+                    await asyncio.sleep(30)
+                
+                resultado_gradle_war, processo_war = await processando_war
+
+                formata_resultado_gradle_war = await regex.regex_saida_war(bot, str(resultado_gradle_war))
 
                 if processo_war.returncode == 0:
-                    
-                    await contexto.send(f"\nProcesso de build executado com exito >>> ")
-                    
-                    await contexto.send(f"\nSaida gradle war(gerando package .war): \n\n")
-                    # await contexto.send(f"{fomatado_resultado_gradle_war}") 
 
-                    data_atual = datetime.now()
-                    data_formatada = data_atual.strftime("%d-%m-%Y")
-                    nome_funcoes = f"Funcao-v.{data_formatada}"
+                    await contexto.send(f"Processo de build executado com êxito! \nSaida gradle war(Processo que gera o pacote .war): \n     └> {formata_resultado_gradle_war}")
 
-                    compactar_versao = await projeto.compactar_arquivo(bot, arquivo_sig, nome_funcoes)
+                await contexto.send(f" \nProcesso de compactação Iniciado...")
+
+                data_atual = datetime.now()
+                data_formatada = data_atual.strftime("%d-%m-%Y")
+                nome_funcoes = f"Funcao-v.{data_formatada}"
+
+                compactar_versao = await projeto.compactar_arquivo(bot, arquivo_funcoes, f"{nome_funcoes}")
 
                 if compactar_versao:
-
+                    
                     await contexto.send(f"Processo de compactação finalizado!")
+
+                else:
+
+                    await contexto.send(f"Processo de compactação não foi realizado!")
 
     except Exception as exception:
         
@@ -278,13 +319,24 @@ async def compactar(contexto):
 
     try:
 
-        versao = "2.5.235"
+        data_atual = datetime.now()
+        data_formatada = data_atual.strftime("%d-%m-%Y")
+        nome_sig = f"SIG-2.5.205-{data_formatada}"
+        nome_sig = str(nome_sig)
        
-        compactar_versao = await projeto.compactar_arquivo(bot, arquivo_sig, f"SIG-{versao}")
+        processando_compactar_versao = asyncio.create_task(projeto.compactar_arquivo(bot, arquivo_sig, nome_sig))
 
-        if compactar_versao:
+        while not processando_compactar_versao.done():
+                    bot.logger.info("Compactando...")
+                    await contexto.send("Executando compactação...")
+                    await asyncio.sleep(30)
+
+        processo_compactacao = await processando_compactar_versao
+
+        if processo_compactacao:
 
             await contexto.send(f"Processo de compactação finalizado!")
+            bot.logger.info(f"Processo de compactação finalizado!")
 
     except Exception as exception:
 
@@ -296,17 +348,22 @@ async def upload_war(contexto):
     funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
-        await contexto.send(f"\nIniciando Upload: \n\n")
+    
+        await contexto.send(f"\nIniciando upload. \n\n")
 
-        if not os.path.isfile(arquivo_sig):
-            await contexto.send("Arquivo sig.war não encontrado.")
-            return
+        processando_upload_arquivo = asyncio.create_task(projeto.disponibilizar_arquivo(bot, arquivo_sig, "sig"))
+
+        processo_upload = await processando_upload_arquivo
+
+        if processo_upload:
+
+            await contexto.send(f"Processo de upload finalizado!")
+            bot.logger.info(f"Processo de upload não foi realizado!")
         else:
 
-            task = await upload.fazer_upload_arquivo(arquivo_sig, 'sig', 'sig')
-
-            await contexto.send(f"Upload concluído. Link \n\n{task}")
-
+            await contexto.send(f"ERROR - upload não foi realizado!")
+            bot.logger.info(f"Processo de upload não foi realizado!")
+        
     except Exception as exception:
 
         bot.logger.error(f'{funcao_atual} - {exception}') 
@@ -344,7 +401,7 @@ async def on_message(message):
             resposta = "iniciando sistemas...\n"
             await message.channel.send(resposta)
 
-            bot.logger.info(f"Comando recebido: {comando}")  # Adiciona um print para exibir o comando recebido
+            bot.logger.info(f"Comando recebido: {comando}")
             
             try:
             
@@ -375,6 +432,13 @@ async def on_message(message):
                 bot.logger.error(f"{funcao_atual} - {exception}")
        
     await bot.process_commands(message)
+
+async def status_processamento(bot, contexto, procesamento, tempo):
+    
+    while not procesamento.done():
+            bot.logger.info("Processando...")
+            await contexto.send("Executando o processo...")
+            await asyncio.sleep(tempo)
     
 try:
 

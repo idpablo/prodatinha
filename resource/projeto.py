@@ -181,6 +181,7 @@ async def gradle_war(bot):
             stdout, stderr = await processo.communicate()
 
             if processo.returncode == 0:
+                bot.logger.info(f"Sucesso ao executar gradle war")
                 return stdout.decode(), processo
             else:
                 bot.logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")
@@ -210,18 +211,65 @@ async def compactar_arquivo(bot, caminho_arquivo, nome_arquivo):
         
         elif os.path.exists("sig.war"):
 
-            processo = await asyncio.create_subprocess_shell(f"rar a {nome_arquivo}.rar sig.war ", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-            stdout, stderr = await processo.communicate()
+            while True:
 
-            if processo.returncode == 0:
-                
-                bot.logger.info("Processo de compactação finalizado!")
+                processo = await asyncio.create_subprocess_shell(f"rar a {nome_arquivo}.rar sig.war ", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                await processo.communicate()
 
-                return True
+                if processo.returncode == 0:
+                    
+                    bot.logger.info("Processo de compactação finalizado!")
+
+                    return True
 
         else:
 
             bot.logger.error("'sig.war' não encontrado, adicione e tente novamente.")
+            return False
+
+
+    except Exception as exception:
+         
+         bot.logger.error(f"{funcao_atual} - {exception}")
+
+async def disponibilizar_arquivo(bot, caminho_arquivo, tipo):
+
+    funcao_atual = inspect.currentframe().f_code.co_name
+
+    try:
+
+        bot.logger.info(f"{funcao_atual} - caminho recebido: {caminho_arquivo}")
+
+        arquivos_rar = []
+        lista_arquivos = os.listdir(caminho_arquivo)
+        
+        for arquivo in lista_arquivos:
+            if arquivo.endswith(".rar"):
+                arquivos_rar.append(arquivo)
+        
+        if arquivos_rar:
+        
+            bot.logger.info(f"Arquivo que sera disponibilizado: {arquivos_rar}")
+            
+            os.chdir(caminho_arquivo)
+            diretorio_atual = os.getcwd()
+
+            bot.logger.info(f"{funcao_atual} - diretorio atual: {diretorio_atual}")
+
+            while True:
+
+                processo = await asyncio.create_subprocess_shell(f"mv {arquivos_rar[0]} /repo/disponibilizar-arquivos/arquivos_build/{tipo}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                await processo.communicate()
+                
+                if processo.returncode == 0:
+                    
+                    bot.logger.info("Arquivo movido com exitô!")
+
+                    return True
+
+        else:
+
+            bot.logger.error("'Arquivo .rar' não encontrado, adicione e tente novamente.")
 
     except Exception as exception:
          
