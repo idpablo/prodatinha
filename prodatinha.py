@@ -74,7 +74,7 @@ async def on_disconnect():
 
         logger.error(f"{exception}")
 
-@tasks.loop(minutes=5.0)
+@bot.event
 async def status_task() -> None:
     """
     Definindo status do bot.
