@@ -80,25 +80,72 @@ async def versionamento_sig():
 
         logger.error(f"{funcao_atual} - {exception}")
 
+async def versao_atual_funcoes():
+
+    funcao_atual = inspect.currentframe().f_code.co_name
+    caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
+
+    try:
+
+        with open(caminho_versao_sigpwebfuncoes, 'r') as f:
+            conteudo = f.read()
+
+            padrao_versao = r'VERSAO\s*=\s*"(.*)"'
+            padrao_data = r'DATA\s*=\s*"(.*)"'
+
+            versao = re.search(padrao_versao, conteudo)
+            data = re.search(padrao_data, conteudo)
+
+            if versao and data:
+                versao = versao.group(1)
+                data = data.group(1)
+                return versao, data
+            else:
+                return None, None
+        
+    except Exception as exception:
+
+        logger.error(f"{funcao_atual} - {exception}")
+
 async def versionamento_funcoes():
 
     funcao_atual = inspect.currentframe().f_code.co_name
-    caminho_arquivo = r"/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
+    caminho_versao_sigpwebfuncoes = r"/opt/docker//repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
+
+    versao_atual, data_atual = versao_atual_funcoes()
+
+    logger.info(f"Versão atual: {versao_atual}")
+    logger.info(f"Data atual: {data_atual}")
 
     try:
-    
-        nova_versao = "2023.07.08"
-        nova_data = "08/07/2023 - 11:00"
 
-        with open(caminho_arquivo, 'r') as arquivo:
-            conteudo = arquivo.read()
+        versao_atual, data_atual = await versao_atual_funcoes(caminho_versao_sigpwebfuncoes)
 
-        conteudo = re.sub(r'public static String VERSAO = "[^"]+";', f'public static String VERSAO = "{nova_versao}";', conteudo)
-        conteudo = re.sub(r'public static String DATA = "[^"]+";', f'public static String DATA = "{nova_data}";', conteudo)
+        if not versao_atual or not data_atual:
+            logger.info("Não foi possível encontrar as variáveis no arquivo.")
+            return
 
-        with open(caminho_arquivo, 'w') as arquivo:
-            arquivo.write(conteudo)
+        nova_data = datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
 
+        with open(caminho_versao_sigpwebfuncoes, 'r') as f:
+            conteudo = f.read()
+
+        conteudo = re.sub(r'DATA\s*=\s*".*"', f'DATA="{nova_data}"', conteudo)
+
+        with open(caminho_versao_sigpwebfuncoes, 'w') as f:
+            f.write(conteudo)
+        
+        versao_atualizada, data_atualizada = versao_atual_funcoes()
+
+        logger.info(f"Versão atual: {versao_atualizada}")
+        logger.info(f"Data atual: {data_atualizada}")
+
+        return  versao_atualizada, data_atualizada
+
+    except Exception as exception:
+        logger.error(f"{funcao_atual} - {exception}")
+        return
+        
     except Exception as exception:
 
         logger.error(f"{funcao_atual} - {exception}")
@@ -208,11 +255,11 @@ async def compactar_arquivo(caminho_arquivo, nome_arquivo):
 
         logger.info(f"Diretorio atual: {diretorio_atual}")
 
-        if os.path.exists("sig"):
+        if os.path.exists(["sig", "sigpwebfuncoes"]):
 
             os.rename("sig", "sig.war")
         
-        elif os.path.exists("sig.war"):
+        elif os.path.exists(["sig.war", "sigpwebfuncoes.war"]):
 
             while True:
 
