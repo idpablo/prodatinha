@@ -2,13 +2,17 @@
 
 import psutil
 
+import util.logger as logger
+
+logger = logger.setup_logger("apm.py", "discord.log")
+
 class monitor_recursos:
     def __init__(self, uso_ram_mb, uso_cpu=None, processos=None):
         self.uso_ram_mb = uso_ram_mb
         self.uso_cpu = uso_cpu
         self.processos = processos
 
-def monitorar_recursos(bot):
+def monitorar_recursos():
     try:
         processo = psutil.Process()
         informacoes = []
@@ -32,5 +36,5 @@ def monitorar_recursos(bot):
         return informacoes
     
     except Exception as exception:
-        bot.logger.error(f"{exception}")
+        logger.error(f"{exception}")
         return None

@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
+import util.logger as logger
 import inspect
 import re
 
+logger = logger.setup_logger("regex.py", "discord.log")
 arquivo_atual = inspect.currentframe().f_code.co_filename
 
 class ResultadoRegex:
@@ -18,10 +20,10 @@ class ResultadoRegex:
             self.task = None
 
 #funcao regex_build analisa e capitura a saida do comando gradle clean, não a uso efetivo atualmente
-async def regex_build(bot, texto):
+async def regex_build(texto):
     try:
-        bot.logger.info(f"Regex iniciado")
-        bot.logger.info(f"{arquivo_atual} - Texto: {texto}")
+        logger.info(f"Regex iniciado")
+        logger.info(f"{arquivo_atual} - Texto: {texto}")
         
         args_match = re.search(r"args=(\[.*?\])", texto)
         args = eval(args_match.group(1)) if args_match else []
@@ -42,11 +44,14 @@ async def regex_build(bot, texto):
 
     except Exception as exception:
         
-        bot.logger.error(f'{arquivo_atual} - {exception}')
+        logger.error(f'{arquivo_atual} - {exception}')
         return None
 
-async def regex_git_checkout(bot, texto):
+async def regex_git_checkout(texto):
     try:
+        logger.info(f"Regex iniciado")
+        logger.info(f"{arquivo_atual} - Texto: {texto}")
+
         args_match = re.search(r"args='(.*?)'", texto)
         args = args_match.group(1) if args_match else ""
 
@@ -63,10 +68,10 @@ async def regex_git_checkout(bot, texto):
 
     except Exception as exception:
 
-        bot.logger.error(f'{arquivo_atual} - {exception}')
+        logger.error(f'{arquivo_atual} - {exception}')
         return None
 
-async def regex_saida_war(bot, array):
+async def regex_saida_war(array):
     try:
 
         padrao = r"(Execution Time.*[\s\S]*?up-to-date)"  
@@ -75,5 +80,5 @@ async def regex_saida_war(bot, array):
         return resultado
 
     except Exception as exception:
-        bot.logger.error(f'{arquivo_atual} - {exception}')
+        logger.error(f'{arquivo_atual} - {exception}')
         return None
