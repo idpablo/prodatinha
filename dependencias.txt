@@ -1,8 +1,5 @@
 psutil 
 docker
 discord
-google-auth 
-google-auth-oauthlib 
-google-auth-httplib2 
-google-api-python-client
+python-dotenv
 googletrans==4.0.0-rc1

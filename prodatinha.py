@@ -9,6 +9,7 @@ import random
 import os
 
 from datetime import datetime
+from dotenv import load_dotenv
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot
 from discord.errors import GatewayNotFound
@@ -29,6 +30,9 @@ config = config.load_config(bot)
 bot.logger = logger
 bot.config = config
 
+# Load variaveis .env
+load_dotenv()
+
 intents = discord.Intents.all()
 
 bot = Bot(
@@ -38,12 +42,11 @@ bot = Bot(
 )
 
 # Diretório do projeto Java
-diretorio_projeto = "/repo/sig"
-diretorio_sig = "/repo/sig/sig"
-diretorio_funcoes = "/repo/sig/sigpwebfuncoes"
-arquivo_sig = "/repo/sig/sig/build/libs"
-arquivo_funcoes = "/repo/sig/sigpwebfuncoes/build/libs"
-diretorio_json = "/repo/sig/sig/WebContent/version.json"
+diretorio_projeto = os.getenv("DIRETORIO_PROJETO")
+diretorio_sig = os.getenv("DIRETORIO_SIG")
+diretorio_funcoes = os.getenv("DIRETORIO_FUNCOES")
+arquivo_sig = os.getenv("ARQUIVO_SIG")
+arquivo_funcoes = os.getenv("ARQUIVO_FUNCOES")
 
 @bot.event
 async def on_ready():
