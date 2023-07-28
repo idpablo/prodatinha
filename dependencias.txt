@@ -1,5 +1,6 @@
 psutil 
 docker
+chardet
 discord
 python-dotenv
 googletrans==4.0.0-rc1

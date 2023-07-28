@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import json
+import zipfile
 import asyncio
 import inspect
 import subprocess
@@ -42,7 +43,7 @@ async def checkout(branch, diretorio_projeto):
 async def versionamento_sig():
 
     funcao_atual = inspect.currentframe().f_code.co_name
-    diretorio_json = "/repo/sig/sig/WebContent/version.json"
+    diretorio_json = "/opt/docker/repo/sig/sig/WebContent/version.json"
 
     try:
 
@@ -87,7 +88,7 @@ async def versao_atual_funcoes():
 
     try:
 
-        with open(caminho_versao_sigpwebfuncoes, 'r') as f:
+        with open(caminho_versao_sigpwebfuncoes, 'r', encoding='cp1252') as f:
             conteudo = f.read()
 
             padrao_versao = r'VERSAO\s*=\s*"(.*)"'
@@ -99,6 +100,10 @@ async def versao_atual_funcoes():
             if versao and data:
                 versao = versao.group(1)
                 data = data.group(1)
+
+                logger.info(f"Versão atual: {versao}")
+                logger.info(f"Data atual: {data}")
+
                 return versao, data
             else:
                 return None, None
@@ -110,41 +115,27 @@ async def versao_atual_funcoes():
 async def versionamento_funcoes():
 
     funcao_atual = inspect.currentframe().f_code.co_name
-    caminho_versao_sigpwebfuncoes = r"/opt/docker//repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
-
-    versao_atual, data_atual = versao_atual_funcoes()
-
-    logger.info(f"Versão atual: {versao_atual}")
-    logger.info(f"Data atual: {data_atual}")
+    caminho_versao_sigpwebfuncoes = "/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
     try:
 
-        versao_atual, data_atual = await versao_atual_funcoes(caminho_versao_sigpwebfuncoes)
-
-        if not versao_atual or not data_atual:
-            logger.info("Não foi possível encontrar as variáveis no arquivo.")
-            return
-
         nova_data = datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
+        nova_data_nome = datetime.now().strftime("%d-%m-%Y")
 
-        with open(caminho_versao_sigpwebfuncoes, 'r') as f:
+        with open(caminho_versao_sigpwebfuncoes, 'r', encoding='cp1252') as f:
             conteudo = f.read()
 
         conteudo = re.sub(r'DATA\s*=\s*".*"', f'DATA="{nova_data}"', conteudo)
 
-        with open(caminho_versao_sigpwebfuncoes, 'w') as f:
+        with open(caminho_versao_sigpwebfuncoes, 'w', encoding='cp1252') as f:
             f.write(conteudo)
-        
-        versao_atualizada, data_atualizada = versao_atual_funcoes()
 
-        logger.info(f"Versão atual: {versao_atualizada}")
-        logger.info(f"Data atual: {data_atualizada}")
+        logger.info(f"Data atualizada: {nova_data}")
 
-        return  versao_atualizada, data_atualizada
-
-    except Exception as exception:
-        logger.error(f"{funcao_atual} - {exception}")
-        return
+        if nova_data:
+                return nova_data_nome
+        else:
+            return None, None
         
     except Exception as exception:
 
@@ -241,29 +232,74 @@ async def gradle_war():
         logger.error(f"{funcao_atual} - {exception}")
         await asyncio.sleep(5)
 
-async def compactar_arquivo(caminho_arquivo, nome_arquivo):
+async def adicionar_properties(caminho_war, caminho_no_war, caminho_properties):
+    
+    arquivo_war = os.path.abspath(caminho_war)
+    arquivo_properties = os.path.abspath(caminho_properties)
+
+    # Caminho relativo dentro do pacote .war onde o arquivo será adicionado
+    # caminho_no_war = "WEB-INF/classes/servico/comun/SigpConexao.properties"
+
+    try:
+        with zipfile.ZipFile(arquivo_war, 'a') as war_zip:
+            war_zip.write(arquivo_properties, arcname=caminho_no_war)
+
+        print("Arquivo adicionado ao pacote .war com sucesso!")
+    except Exception as e:
+        print(f"Ocorreu um erro ao adicionar o arquivo: {e}")
+
+async def compactar_arquivo(caminho_diretorio, nome_arquivo):
 
     funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
 
-        logger.info(f"Caminho recebido: {caminho_arquivo}")
+        logger.info(f"Caminho recebido: {caminho_diretorio}")
         logger.info(f"Nome arquivo recebido: {nome_arquivo}")
 
-        os.chdir(caminho_arquivo)
+        os.chdir(caminho_diretorio)
         diretorio_atual = os.getcwd()
 
         logger.info(f"Diretorio atual: {diretorio_atual}")
 
-        if os.path.exists(["sig", "sigpwebfuncoes"]):
+        if os.path.exists("sig"):
 
             os.rename("sig", "sig.war")
-        
-        elif os.path.exists(["sig.war", "sigpwebfuncoes.war"]):
+
+        elif os.path.exists("sigpwebfuncoes.war"):
+
+            caminho_arquivo = caminho_diretorio + "/sigpwebfuncoes.war"
+
+            logger.info(f"Arquivo sigpwebfuncoes.war encontrado")
+
+            diretorio_atual = os.getcwd()
+
+            logger.info(f"Diretorio atual: {diretorio_atual}")
 
             while True:
 
-                processo = await asyncio.create_subprocess_shell(f"rar a {nome_arquivo}.rar sig.war ", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                processo = await asyncio.create_subprocess_shell(f'rar a "{nome_arquivo}.rar" sigpwebfuncoes.war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                await processo.communicate()
+
+                logger.info(f"Arquivo {caminho_arquivo} compactado com sucesso para {nome_arquivo}.rar")
+
+                if processo.returncode == 0:
+                    
+                    logger.info("Processo de compactação finalizado!")
+
+                    return True
+                
+                else:
+                
+                    logger.error(f"{funcao_atual} - Erro ao executar compactação: {processo}")
+                
+        elif os.path.exists("sig.war"):
+
+            caminho_arquivo = caminho_diretorio + "/sig.war"
+
+            while True:
+
+                processo = await asyncio.create_subprocess_shell(f'rar a {nome_arquivo}.rar sig.war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
                 await processo.communicate()
 
                 if processo.returncode == 0:
@@ -272,11 +308,14 @@ async def compactar_arquivo(caminho_arquivo, nome_arquivo):
 
                     return True
 
+                else:
+                
+                    logger.error(f"{funcao_atual} - Erro ao executar compactação: {processo}")
+
         else:
 
-            logger.error("'sig.war' não encontrado, adicione e tente novamente.")
+            logger.error("Arquivo não encontrado, adicione e tente novamente.")
             return False
-
 
     except Exception as exception:
          

@@ -20,7 +20,7 @@ def load_config():
         else:
             with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
                 
-                logger.error(f"{funcao_atual} - Leitura do arquivo config.json realidaza!")
+                logger.info(f"{funcao_atual} - Leitura do arquivo config.json realidaza!")
 
                 config = json.load(file)
 
