@@ -46,6 +46,9 @@ diretorio_sig = os.getenv("DIRETORIO_SIG")
 diretorio_funcoes = os.getenv("DIRETORIO_FUNCOES")
 arquivo_sig = os.getenv("ARQUIVO_SIG")
 arquivo_funcoes = os.getenv("ARQUIVO_FUNCOES")
+caminho_properties = os.getenv("CAMINHO_PROPERTIES")
+caminho_properties_sig = os.getenv("CAMINHO_PROPERTIES_SIG")
+caminho_properties_funcoes = os.getenv("CAMINHO_PROPERTIES_FUNCOES")
 
 @bot.event
 async def on_ready():
@@ -188,38 +191,56 @@ async def gerar_versao_sig(contexto):
 
                     await contexto.send(f"Processo de build executado com êxito! \nSaida gradle war(Processo que gera o pacote .war): \n     └> {formata_resultado_gradle_war}")
 
-                await contexto.send(f" \nProcesso de compactação Iniciado...")
+                    await contexto.send(f"\nIniciando adionar properties. \n\n")
 
-                data_atual = datetime.now()
-                data_formatada = data_atual.strftime("%d-%m-%Y")
-                nome_sig = f"SIG-{versao[1]}-{data_formatada}"
-                nome_sig = str(nome_sig)
+                    caminho_war = arquivo_sig  + "/sig.war"
 
-                processando_compactar_versao = asyncio.create_task(compactar(nome_sig))
+                    processando_adionar_properties = asyncio.create_task(projeto.adicionar_properties(caminho_war, caminho_properties_sig, caminho_properties))
 
-                await status_processamento(contexto, processando_compactar_versao, 10)
+                    processo_properties = await processando_adionar_properties
 
-                processo_compactacao = await processando_compactar_versao
+                    if processo_properties:
 
-                if processo_compactacao:
+                        await contexto.send(f"Processo que adiciona o arquivo .properties finalizado!")
+                        logger.info(f"Processo que adiciona o arquivo .properties foi realizado!")
 
-                    await contexto.send(f"Processo de compactação finalizado!")
-                    logger.info(f"Processo de compactação finalizado!")
+                        await contexto.send(f" \nProcesso de compactação Iniciado...")
 
-                    processando_upload_arquivo = asyncio.create_task(projeto.disponibilizar_arquivo(arquivo_sig, "sig"))
+                        data_atual = datetime.now()
+                        data_formatada = data_atual.strftime("%d-%m-%Y")
+                        nome_sig = f"SIG-{versao[1]}-{data_formatada}"
+                        nome_sig = str(nome_sig)
 
-                    processo_upload = await processando_upload_arquivo
+                        processando_compactar_versao = asyncio.create_task(compactar(nome_sig))
 
-                    if processo_upload:
+                        await status_processamento(contexto, processando_compactar_versao, 3)
 
-                        await contexto.send(f"Processo de upload finalizado!")
-                        await contexto.send(f"Link: [Download Sig](http://10.62.0.105:9200/sig/)\n")
-                        logger.info(f"Processo de upload não foi realizado!")
+                        processo_compactacao = await processando_compactar_versao
+
+                        if processo_compactacao:
+
+                            await contexto.send(f"Processo de compactação finalizado!")
+                            logger.info(f"Processo de compactação finalizado!")
+
+                            processando_upload_arquivo = asyncio.create_task(projeto.disponibilizar_arquivo(arquivo_sig, "sig"))
+
+                            processo_upload = await processando_upload_arquivo
+
+                            if processo_upload:
+
+                                await contexto.send(f"Processo de upload finalizado!")
+                                await contexto.send(f"Link: [Download Sig](http://10.62.0.105s:8080/sig/)\n")
+                                logger.info(f"Processo de upload não foi realizado!")
+                            else:
+
+                                await contexto.send(f"ERROR - upload não foi realizado!")
+                                logger.info(f"Processo de upload não foi realizado!")
+
                     else:
 
-                        await contexto.send(f"ERROR - upload não foi realizado!")
-                        logger.info(f"Processo de upload não foi realizado!")
-
+                        await contexto.send(f"ERROR - adionar arquivo .properties não foi realizado!")
+                        logger.info(f"Processo adionar arquivo .properties não foi realizado!")
+                
     except Exception as exception:
         
         logger.error(f'{funcao_atual} - {exception}') 
@@ -248,7 +269,7 @@ async def gerar_versao_funcoes(contexto):
 
         ambiente = await projeto.configurar_ambiente(diretorio_projeto, diretorio_funcoes)
             
-        if ambiente == True: 
+        if ambiente: 
            
             await contexto.send(f"Ambiente configurado!") 
 
@@ -283,40 +304,58 @@ async def gerar_versao_funcoes(contexto):
 
                     await contexto.send(f"Processo de build executado com êxito! \nSaida gradle war(Processo que gera o pacote .war): \n     └> {formata_resultado_gradle_war}")
 
-                await contexto.send(f" \nProcesso de compactação Iniciado...")
+                    await contexto.send(f"Adicionando arquivo .properties! \n\n")
 
-                nome_funcoes = f"Funcao-v.{versao_atual}-{data_atualizada}"
-                nome_funcoes = str(nome_funcoes)
+                    caminho_war = arquivo_funcoes  + "/sigpwebfuncoes.war"
 
-                processando_compactar_versao = asyncio.create_task(projeto.compactar_arquivo(arquivo_funcoes, nome_funcoes))
+                    processando_adionar_properties = asyncio.create_task(projeto.adicionar_properties(caminho_war, caminho_properties_funcoes, caminho_properties))
 
-                await status_processamento(contexto, processando_compactar_versao, 3)
+                    processo_properties = await processando_adionar_properties
 
-                processo_compactacao = await processando_compactar_versao
+                    if processo_properties:
 
-                if processo_compactacao:
-                    
-                    await contexto.send(f"Processo de compactação finalizado!")
+                        await contexto.send(f"Processo que adiciona o arquivo .properties finalizado!")
+                        logger.info(f"Processo que adiciona o arquivo .properties foi realizado!")
 
-                    await contexto.send(f"Iniciando upload. \n\n")
+                        await contexto.send(f" \nProcesso de compactação Iniciado...")
 
-                    processando_upload_arquivo = asyncio.create_task(projeto.disponibilizar_arquivo(arquivo_funcoes, "sigpwebfuncoes"))
+                        nome_funcoes = f"Funcao-v.{versao_atual}-{data_atualizada}"
+                        nome_funcoes = str(nome_funcoes)
 
-                    processo_upload = await processando_upload_arquivo
+                        processando_compactar_versao = asyncio.create_task(projeto.compactar_arquivo(arquivo_funcoes, nome_funcoes))
 
-                    if processo_upload:
+                        await status_processamento(contexto, processando_compactar_versao, 3)
 
-                        await contexto.send(f"Processo de upload finalizado!")
-                        await contexto.send(f"Link: [Download Funções](http://10.62.0.105:9200/sigpwebfuncoes/)\n")
-                        logger.info(f"Processo de upload realizado!")
+                        processo_compactacao = await processando_compactar_versao
+
+                        if processo_compactacao:
+                            
+                            await contexto.send(f"Processo de compactação finalizado!")
+
+                            await contexto.send(f"Iniciando upload. \n\n")
+
+                            processando_upload_arquivo = asyncio.create_task(projeto.disponibilizar_arquivo(arquivo_funcoes, "sigpwebfuncoes"))
+
+                            processo_upload = await processando_upload_arquivo
+
+                            if processo_upload:
+
+                                await contexto.send(f"Processo de upload finalizado!")
+                                await contexto.send(f"Link: [Download Funções](http://10.62.0.105:8080/sigpwebfuncoes/)\n")
+                                logger.info(f"Processo de upload realizado!") 
+                            else:
+
+                                await contexto.send(f"ERROR - upload não foi realizado!")
+                                logger.info(f"Processo de upload não foi realizado!")
+
+                        else:
+
+                            await contexto.send(f"Processo de compactação não foi realizado!")
+
                     else:
 
-                        await contexto.send(f"ERROR - upload não foi realizado!")
-                        logger.info(f"Processo de upload não foi realizado!")
-
-                else:
-
-                    await contexto.send(f"Processo de compactação não foi realizado!")
+                        await contexto.send(f"ERROR - adionar arquivo .properties não foi realizado!")
+                        logger.info(f"Processo adionar arquivo .properties não foi realizado!")
 
     except Exception as exception:
         

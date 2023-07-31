@@ -115,7 +115,7 @@ async def versao_atual_funcoes():
 async def versionamento_funcoes():
 
     funcao_atual = inspect.currentframe().f_code.co_name
-    caminho_versao_sigpwebfuncoes = "/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
+    caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
     try:
 
@@ -140,7 +140,6 @@ async def versionamento_funcoes():
     except Exception as exception:
 
         logger.error(f"{funcao_atual} - {exception}")
-
 
 async def configurar_ambiente(diretorio_projeto, diretorio_sig):
 
@@ -237,16 +236,16 @@ async def adicionar_properties(caminho_war, caminho_no_war, caminho_properties):
     arquivo_war = os.path.abspath(caminho_war)
     arquivo_properties = os.path.abspath(caminho_properties)
 
-    # Caminho relativo dentro do pacote .war onde o arquivo será adicionado
-    # caminho_no_war = "WEB-INF/classes/servico/comun/SigpConexao.properties"
-
     try:
         with zipfile.ZipFile(arquivo_war, 'a') as war_zip:
             war_zip.write(arquivo_properties, arcname=caminho_no_war)
 
-        print("Arquivo adicionado ao pacote .war com sucesso!")
+        logger.info("Arquivo adicionado ao pacote .war com sucesso!")
+
+        return True
+    
     except Exception as e:
-        print(f"Ocorreu um erro ao adicionar o arquivo: {e}")
+        logger.error(f"Ocorreu um erro ao adicionar o arquivo: {e}")
 
 async def compactar_arquivo(caminho_diretorio, nome_arquivo):
 
