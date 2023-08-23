@@ -16,8 +16,6 @@ from discord.errors import GatewayNotFound
 
 import resource.projeto as projeto
 import config.config as config
-import resource.upload as upload
-import resource.apm as apm
 import util.logger as logger
 import util.regex as regex
 
@@ -63,6 +61,10 @@ async def on_ready():
         logger.info("Sincronizado com comandos globais...")
         await bot.tree.sync()
 
+        statuses = ["com outros bots.", "Paciência!", "com humanos!"]
+
+        await bot.change_presence(activity=discord.Game(random.choice(statuses)))
+
 @bot.event
 async def on_disconnect():
 
@@ -75,33 +77,6 @@ async def on_disconnect():
     except Exception as exception:
 
         logger.error(f"{exception}")
-
-@bot.event
-async def status_task() -> None:
-    """
-    Definindo status do bot.
-    """
-    try:
-        funcao_atual = inspect.currentframe().f_code.co_name
-
-        dados = apm.monitorar_recursos()
-
-        if dados is not None:
-            logger.info(f'{funcao_atual} - Status do bot e processamentos:')
-            logger.info(f"USO RAM: {dados[-1].uso_ram_mb} MB")
-            logger.info(f"USO CPU: {dados[-1].uso_cpu}%")
-            logger.info("Processos em execução:")
-            
-            for proc in dados[-1].processos:
-                logger.info(f"PID: {proc['pid']}, Nome: {proc['nome']}, Uso de CPU: {proc['uso_cpu']}%")
-                
-        statuses = ["com outros bots.", "Paciência!", "com humanos!"]
-        
-        await bot.change_presence(activity=discord.Game(random.choice(statuses)))
-    
-    except Exception as exception:
-        
-        logger.error(f"{funcao_atual} - {exception}")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -165,7 +140,7 @@ async def gerar_versao_sig(contexto):
 
             await contexto.send(f"Versão atual: {versao[0]}\n     └> Versão que sera gerada: {versao[1]}")
 
-            await contexto.send(f"Cache atual: {versao[2]}\n     └> Cache atual da versão que sera gerada: {versao[3]}")      
+            await contexto.send(f"Cache atual: {versao[2]}\n     └> Cache da versão que sera gerada: {versao[3]}")      
     
             await contexto.send(f"Iniciando Clean do repositorio...\n     └> Apagando as versões geradas anteriormente...")
             
@@ -189,6 +164,8 @@ async def gerar_versao_sig(contexto):
 
                 if processo_war.returncode == 0:
 
+                    await bot.change_presence(activity=discord.Game('Build da aplicação finalizado!'))
+
                     await contexto.send(f"Processo de build executado com êxito! \nSaida gradle war(Processo que gera o pacote .war): \n     └> {formata_resultado_gradle_war}")
 
                     await contexto.send(f"\nIniciando adionar properties. \n\n")
@@ -208,10 +185,9 @@ async def gerar_versao_sig(contexto):
 
                         data_atual = datetime.now()
                         data_formatada = data_atual.strftime("%d-%m-%Y")
-                        nome_sig = f"SIG-{versao[1]}-{data_formatada}"
-                        nome_sig = str(nome_sig)
+                        nome_sig = str(f"SIG-{versao[1]}-{data_formatada}")
 
-                        processando_compactar_versao = asyncio.create_task(compactar(nome_sig))
+                        processando_compactar_versao = asyncio.create_task(projeto.compactar_arquivo(arquivo_sig, nome_sig))
 
                         await status_processamento(contexto, processando_compactar_versao, 3)
 
@@ -228,9 +204,12 @@ async def gerar_versao_sig(contexto):
 
                             if processo_upload:
 
+                                await bot.change_presence(activity=discord.Game('Arquivo disponibilizados com exitô.'))
+
                                 await contexto.send(f"Processo de upload finalizado!")
-                                await contexto.send(f"Link: [Download Sig](http://10.62.0.105s:8080/sig/)\n")
-                                logger.info(f"Processo de upload não foi realizado!")
+                                await contexto.send(f"Link: [Download Sig](http://localhost:9200/sig/)\n")
+                                logger.info(f"Processo de upload foi realizado com sucesso!")
+
                             else:
 
                                 await contexto.send(f"ERROR - upload não foi realizado!")
@@ -290,7 +269,7 @@ async def gerar_versao_funcoes(contexto):
             
             if resultado_clean.returncode == 0:
                 
-                await contexto.send(f"Processo 'gradle clean' executado com êxito!\nIniciando empacotamento da aplicação...\n     └> Gerando build do projeto sig.")
+                await contexto.send(f"Processo 'gradle clean' executado com êxito!\nIniciando empacotamento da aplicação...\n     └> Gerando build do projeto funções.")
 
                 processando_war = asyncio.create_task(projeto.gradle_war())
 
@@ -341,7 +320,7 @@ async def gerar_versao_funcoes(contexto):
                             if processo_upload:
 
                                 await contexto.send(f"Processo de upload finalizado!")
-                                await contexto.send(f"Link: [Download Funções](http://10.62.0.105:8080/sigpwebfuncoes/)\n")
+                                await contexto.send(f"Link: [Download Funções](http://localhost:9200/sigpwebfuncoes/)\n")
                                 logger.info(f"Processo de upload realizado!") 
                             else:
 
@@ -361,43 +340,28 @@ async def gerar_versao_funcoes(contexto):
         
         logger.error(f'{funcao_atual} - {exception}') 
 
-@bot.command(name='adionar-properties')
-async def adionar_arquivo(contexto):
-
-    funcao_atual = inspect.currentframe().f_code.co_name
-
-    caminho_war = diretorio_funcoes  + "/sigpwebfuncoes.war"
-    caminho_no_war = "/WEB-INF/classes/servico/comun/SigpConexao.properties"
-    caminho_properties = "/repo/conexao/SigpConexao.properties"
-
-
-    try:
-    
-        await contexto.send(f"\nIniciando upload. \n\n")
-
-        processando_adionar_properties = asyncio.create_task(projeto.adicionar_properties(caminho_war, caminho_no_war, caminho_properties))
-
-        processo_upload = await processando_adionar_properties
-
-        if processo_upload:
-
-            await contexto.send(f"Processo de upload finalizado!")
-            logger.info(f"Processo de upload não foi realizado!")
-        else:
-
-            await contexto.send(f"ERROR - upload não foi realizado!")
-            logger.info(f"Processo de upload não foi realizado!")
-        
-    except Exception as exception:
-
-        logger.error(f'{funcao_atual} - {exception}') 
-
 @bot.command(name='comandos')
 async def comandos(contexto):
-    await contexto.send('Menu de comandos,\n\n1 - !mudar-branch "branch"(Exemplo: !mudar branch master)',
-                        '2 - !gerar-versar-sig (Gera versão da aplicação sig)\n',
-                        '3 - !gerar-versao-funcoes (Gera versão da aplicação funcoes)\n'
-                        )
+    await contexto.send(
+    f"""
+    Menu de comandos:
+    
+    **1 - !branch**
+             |
+            └> Verifica branch atual!
+    
+    **2 - !mudar-branch nome_da_branch**
+             |
+            └> Muda para a branch selecionada! (Exemplo: !mudar-branch master)
+    
+    **3 - !gerar-versao-sig**
+             |
+            └>  Gera versão da aplicação sig!
+    
+    **4 - !gerar-versao-funcoes**
+             |
+            └> Gera versão da aplicação funções
+    """)
 
 @bot.command(name='sobre')
 async def sobre(contexto):
@@ -455,30 +419,6 @@ async def on_message(message):
                 logger.error(f"{funcao_atual} - {exception}")
        
     await bot.process_commands(message)
-
-async def compactar(arquivo, nome):
-
-    funcao_atual = inspect.currentframe().f_code.co_name
-
-    try:
-       
-        processando_compactar_versao = asyncio.create_task(projeto.compactar_arquivo(arquivo, nome))
-
-        while not processando_compactar_versao.done():
-                    logger.info("Compactando...")
-                    await asyncio.sleep(10)
-
-        processo_compactacao = await processando_compactar_versao
-
-        if processo_compactacao:
-
-            logger.info(f"Processo de compactação finalizado!")
-
-            return True
-
-    except Exception as exception:
-
-        logger.error(f'{funcao_atual} - {exception}')
 
 async def status_processamento(contexto, procesamento, tempo):
     

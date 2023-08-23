@@ -11,7 +11,9 @@ import subprocess
 
 from datetime import datetime
 import util.logger as logger
-import util.traduzir as traduzir
+import resource.apm as apm
+
+sys.setrecursionlimit(16385)
 
 logger = logger.setup_logger("projeto.py", "discord.log")
 
@@ -217,6 +219,7 @@ async def gradle_war():
 
         while True:
 
+
             processo = await asyncio.create_subprocess_shell('gradle war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             stdout, stderr = await processo.communicate()
 
@@ -261,11 +264,34 @@ async def compactar_arquivo(caminho_diretorio, nome_arquivo):
 
         logger.info(f"Diretorio atual: {diretorio_atual}")
 
-        if os.path.exists("sig"):
+        if os.path.exists("sig") or os.path.exists("sig.war"):
 
-            os.rename("sig", "sig.war")
+            if os.path.exists("sig"):
+                
+                os.rename("sig", "sig.war")
+
+            logger.info(f"{funcao_atual} - arquivo sig encontrado... \nRenomenando...")
+
+            caminho_arquivo = caminho_diretorio + "/sig.war"
+
+            while True:
+
+                processo = await asyncio.create_subprocess_shell(f'rar a {nome_arquivo}.rar sig.war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                await processo.communicate()
+
+                if processo.returncode == 0:
+                    
+                    logger.info("Processo de compactação finalizado!")
+
+                    return True
+
+                else:
+                
+                    logger.error(f"{funcao_atual} - Erro ao executar compactação: {processo}")
 
         elif os.path.exists("sigpwebfuncoes.war"):
+
+            logger.info(f"{funcao_atual} - arquivo sigpwebfuncoes.war encontrado")
 
             caminho_arquivo = caminho_diretorio + "/sigpwebfuncoes.war"
 
@@ -294,23 +320,8 @@ async def compactar_arquivo(caminho_diretorio, nome_arquivo):
                 
         elif os.path.exists("sig.war"):
 
-            caminho_arquivo = caminho_diretorio + "/sig.war"
-
-            while True:
-
-                processo = await asyncio.create_subprocess_shell(f'rar a {nome_arquivo}.rar sig.war', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-                await processo.communicate()
-
-                if processo.returncode == 0:
-                    
-                    logger.info("Processo de compactação finalizado!")
-
-                    return True
-
-                else:
-                
-                    logger.error(f"{funcao_atual} - Erro ao executar compactação: {processo}")
-
+            logger.info(f"{funcao_atual} - arquivo sig.war encontrado")
+            
         else:
 
             logger.error("Arquivo não encontrado, adicione e tente novamente.")
@@ -346,7 +357,7 @@ async def disponibilizar_arquivo(caminho_arquivo, tipo):
 
             while True:
 
-                processo = await asyncio.create_subprocess_shell(f"mv {arquivos_rar[0]} /repo/disponibilizar-arquivos/arquivos_build/{tipo}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                processo = await asyncio.create_subprocess_shell(f"mv {arquivos_rar[0]} /repo/disponibilizar_arquivos/arquivos_build/{tipo}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
                 await processo.communicate()
                 
                 if processo.returncode == 0:
@@ -362,3 +373,25 @@ async def disponibilizar_arquivo(caminho_arquivo, tipo):
     except Exception as exception:
          
          logger.error(f"{funcao_atual} - {exception}")
+
+async def status_task() -> None:
+    """
+    Definindo status do bot.
+    """
+    try:
+        funcao_atual = inspect.currentframe().f_code.co_name
+
+        dados = apm.monitorar_recursos()
+
+        if dados is not None:
+            logger.info(f'{funcao_atual} - Status do bot e processamentos:')
+            logger.info(f"USO RAM: {dados[-1].uso_ram_mb} MB")
+            logger.info(f"USO CPU: {dados[-1].uso_cpu}%")
+            logger.info("Processos em execução:")
+            
+            for proc in dados[-1].processos:
+                logger.info(f"PID: {proc['pid']}, Nome: {proc['nome']}, Uso de CPU: {proc['uso_cpu']}%")
+    
+    except Exception as exception:
+        
+        logger.error(f"{funcao_atual} - {exception}")

@@ -2,15 +2,14 @@ module.exports = {
     apps: [
       {
         name: 'prodatinha', 
-        script: 'prodatinha.py', 
+        script: 'app.js',
+        args: 'run dev', 
+        instances: 1,
         interpreter: 'python3', 
-        cwd: '/repo/prodatinha',
+        cwd: '/opt/docker/repo/disponibilizar_arquivos',
         watch: true, 
         autorestart: false,
         max_restarts: 10, 
-        ignore_watch: ['node_modules', 'logs', '.git', '.vscode'],
-        env: {
-        },
-      },
+        max_memory_restart: '1G',,
     ],
   };
