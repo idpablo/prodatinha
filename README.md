@@ -1,20 +1,56 @@
 # prodatinha
-    Bot criado para automatizar o build da aplicação SIG - Prodata, e mais...
-    Todas as instruções para a manutenção e 
+ Bot criado para automatizar o build da aplicação SIG - Prodata, e mais...
+ 
+## Sobre
 
-# Dependencias
-**DENTRO DO DIRETORIO DO BOT** 
-    Python3
-    NodeJS 
-    Execute: 'pip install -r dependencias.txt' <- Instala todas as dependencias necessarias.
-    Execute: 'npm install pm2' <- Adiciona o gerenciador de processos avançado.
+ Bot desenvolvido a partir da api disponibilizada pelo discord:
+ [Dashboard API](https://discord.com/developers/applications) / [Documentação API](https://discord.com/developers/docs/intro)
+ 
+## Tecnologias usadas
 
-# Execução
-    Execute: 'pm2 start ecosystem.config.js' <- adiona e inicia o processo do bot ao gerenciador.
-    Execute: 'pm2 reload prodatinha' <- recarrega o script.
-    Execute: 'pm2 stop prodatinha' <- para o processo.
-    Execute: 'pm2 log prodatinha' <- observa os logs gerados pelo processo.
+<div style="display: inline_block"><br>
+  <img align="center" alt="Prodatinha-Python" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg">
+</div>
 
+### Dependências globais
+
+Python3 / pm2
+
+### Dependências locais
+
+```bash
+pip install -r dependecias.txt
+```
+
+### Iniciar aplicação
+
+```bash
+pm2 start ecosystem.config.js
+```
+
+### logs prodatinha
+
+```bash
+pm2 logs prodatinha
+```
+
+### Monitorar tarefas pn2
+
+```bash
+pm2 monit
+```
+
+### Reiniciar aplicação
+
+```bash
+pm2 restart prodatinha
+```
+
+### Parar aplicação
+
+```bash
+pm2 stop prodatinha
+```
 
 # Melhorias
 
