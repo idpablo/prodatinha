@@ -4,7 +4,7 @@ import psutil
 
 import util.logger as logger
 
-logger = logger.setup_logger("apm.py", "discord.log")
+logger = logger.setup_logger("apm.py", "log/discord.log")
 
 class monitor_recursos:
     def __init__(self, uso_ram_mb, uso_cpu=None, processos=None):
@@ -12,7 +12,7 @@ class monitor_recursos:
         self.uso_cpu = uso_cpu
         self.processos = processos
 
-def monitorar_recursos():
+async def monitorar_recursos():
     try:
         processo = psutil.Process()
         informacoes = []

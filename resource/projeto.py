@@ -15,7 +15,7 @@ import resource.apm as apm
 
 sys.setrecursionlimit(16385)
 
-logger = logger.setup_logger("projeto.py", "discord.log")
+logger = logger.setup_logger("projeto.py", "log/discord.log")
 
 async def checkout(branch, diretorio_projeto):
     
@@ -35,7 +35,7 @@ async def checkout(branch, diretorio_projeto):
         if mudar_branch.find("Your branch is up to date with"):
             logger.info("Branch Alterada com sucesso!")
 
-        return(mudar_branch)
+        return mudar_branch
     
     except Exception as exeption:
         
@@ -225,7 +225,7 @@ async def gradle_war():
 
             if processo.returncode == 0:
                 logger.info(f"Sucesso ao executar gradle war")
-                return stdout.decode(), processo
+                return processo
             else:
                 logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")
 
@@ -270,7 +270,8 @@ async def compactar_arquivo(caminho_diretorio, nome_arquivo):
                 
                 os.rename("sig", "sig.war")
 
-            logger.info(f"{funcao_atual} - arquivo sig encontrado... \nRenomenando...")
+            logger.info(f"{funcao_atual} - arquivo sig encontrado. Renomenando...")
+            logger.info(f"Renomenando arquivo...")
 
             caminho_arquivo = caminho_diretorio + "/sig.war"
 
@@ -381,7 +382,7 @@ async def status_task() -> None:
     try:
         funcao_atual = inspect.currentframe().f_code.co_name
 
-        dados = apm.monitorar_recursos()
+        dados = await apm.monitorar_recursos()
 
         if dados is not None:
             logger.info(f'{funcao_atual} - Status do bot e processamentos:')

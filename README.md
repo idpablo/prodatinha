@@ -16,3 +16,8 @@
     Execute: 'pm2 log prodatinha' <- observa os logs gerados pelo processo.
 
 
+# Melhorias
+
+    Adicionar controle de containers para subir e testar se a aplicação esta funcionando corretamente;
+
+
