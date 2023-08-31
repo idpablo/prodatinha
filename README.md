@@ -14,7 +14,7 @@
 
 ### Dependências globais
 
-Python3 / pm2
+Python3 / NodeJS / pm2
 
 ### Dependências locais
 
