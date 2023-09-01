@@ -49,3 +49,7 @@ docker run -it --rm -p 8082:8080 --name sig sig
 # apos o deploy da aplicação ela ficara disponivel no host:
 
 http://localhost:8080/sig/
+
+# apos o deploy da aplicação ela ficara disponivel no host:
+
+http://172.16.30.8:8080/sigpwebfuncoesBetaAngra/funcoes_setup.jsp
