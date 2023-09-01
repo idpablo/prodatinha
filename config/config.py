@@ -5,43 +5,45 @@ import json
 import sys
 import os
 
-import util.logger as logger
+from util import logger
 
 logger = logger.setup_logger("config.py", "log/discord.log")
 
-def load_config():
+class config():
 
-    funcao_atual = inspect.currentframe().f_code.co_name
+    def load_config():
 
-    try:
+        funcao_atual = inspect.currentframe().f_code.co_name
 
-        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
-            sys.exit("'config.json' não encontrado, adicione e tente novamente.")
-        else:
-            with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
-                
-                logger.info(f"{funcao_atual} - Leitura do arquivo config.json realidaza!")
+        try:
 
-                config = json.load(file)
+            if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
+                sys.exit("'config.json' não encontrado, adicione e tente novamente.")
+            else:
+                with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
+                    
+                    logger.info(f"{funcao_atual} - Leitura do arquivo config.json realidaza!")
 
-                return config
-    
-    except Exception as exception:
+                    config = json.load(file)
 
-        logger.error(f"{funcao_atual} - {exception}")
-
-def load_config_gpt():
-
-    try:
-
-        if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/chatgpt.json"):
-            sys.exit("'chatgpt.json' não encontrado, adicione e tente novamente.")
-        else:
-            with open(f"{os.path.realpath(os.path.dirname(__file__))}/chatgpt.json") as file:
-                config_gpt = json.load(file)
-
-                return config_gpt
-    
-    except Exception as exception:
+                    return config
         
-        bot.logger.error(f"{exception}")
+        except Exception as exception:
+
+            logger.error(f"{funcao_atual} - {exception}")
+
+    def load_config_gpt():
+
+        try:
+
+            if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/chatgpt.json"):
+                sys.exit("'chatgpt.json' não encontrado, adicione e tente novamente.")
+            else:
+                with open(f"{os.path.realpath(os.path.dirname(__file__))}/chatgpt.json") as file:
+                    config_gpt = json.load(file)
+
+                    return config_gpt
+        
+        except Exception as exception:
+            
+            logger.error(f"{exception}")

@@ -1,7 +1,7 @@
 psutil 
 docker
-chardet
 discord
 zipfile
 python-dotenv
 googletrans==4.0.0-rc1
+unittest

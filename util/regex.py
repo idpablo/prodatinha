@@ -1,11 +1,12 @@
-#!/usr/bin/python3
-
-import util.logger as logger
 import inspect
 import re
 
+from util import logger
+
 logger = logger.setup_logger("regex.py", "log/discord.log")
+
 arquivo_atual = inspect.currentframe().f_code.co_filename
+
 
 class ResultadoRegex:
     def __init__(self, args, returncode, stdout, stderr, task=None):

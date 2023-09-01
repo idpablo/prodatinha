@@ -2,7 +2,7 @@ module.exports = {
     apps: [
       {
         name: 'prodatinha', 
-        script: 'prodatinha.py', 
+        script: '__main__.py', 
         interpreter: 'python3', 
         cwd: '/repo/prodatinha',
         watch: false, 
