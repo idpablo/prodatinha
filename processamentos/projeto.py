@@ -255,9 +255,12 @@ async def gradle_war():
             stdout, stderr = await processo.communicate()
 
             if processo.returncode == 0:
+
                 logger.info(f"Sucesso ao executar gradle war")
-                return processo
+                return stdout.decode(), processo
+            
             else:
+                
                 logger.error(f"Erro ao executar o gradle war: {stderr.decode()}")
 
     except Exception as exception:
