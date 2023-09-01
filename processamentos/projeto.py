@@ -16,7 +16,7 @@ sys.setrecursionlimit(16385)
 logger = logger.setup_logger("projeto.py")
 
 
-async def checkout(branch, diretorio_projeto):
+async def git_checkout(branch, diretorio_projeto):
     
     try:
 
@@ -48,13 +48,29 @@ async def checkout(branch, diretorio_projeto):
         return("Erro ao alterar branch")
 
 #Deve ser implementado
-async def git_criar_branch(diretorio_projeto):
+async def git_criar_branch(diretorio_projeto, nova_branch):
     
     funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
         logger.info("Criando nova branch pra gerar o build da aplicação")
-    
+
+        os.chdir(diretorio_projeto)
+        diretorio_atual = os.getcwd()
+
+        logger.info(f"Diretorio: {diretorio_atual}")
+        logger.info(f'Nome da branch --> {nova_branch}')
+
+        processo_git_checkout = subprocess.run(["bash", "-c", f"git checkout -b {nova_branch}"], capture_output=True)
+
+        if processo_git_checkout.returncode == 0:
+
+            logger.info(f'Branch criada: {processo_git_checkout.stdout}')
+        
+        if processo_git_checkout.returncode == 0:
+
+            logger.info(f'Branch criada: {processo_git_checkout.stdout}')
+        
     except Exception as exception:
 
         logger.error(f"{funcao_atual} - {exception}")

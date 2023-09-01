@@ -269,9 +269,9 @@ async def gerar_versao_funcoes(contexto):
             
             await status_processamento(contexto, processando_clean, 3)
 
-            resultado_clean = await processando_clean
+            processo_clean = await processando_clean
             
-        if resultado_clean.returncode == 0:
+        if processo_clean.returncode == 0:
             
             await contexto.send(f"Processo 'gradle clean' executado com êxito!\nIniciando empacotamento da aplicação...\n     └> Gerando build do funções.")
 
@@ -279,7 +279,7 @@ async def gerar_versao_funcoes(contexto):
 
             await status_processamento(contexto, processando_war, 10)
             
-            processo_war = await processando_war
+            resultado_war, processo_war = await processando_war
 
         if processo_war.returncode == 0:
 
@@ -427,7 +427,7 @@ async def on_message(message):
                     await message.channel.send('\nCheckout iniciado...')
                     await message.channel.send(f'Mudando para a branch:\n     └> {branch}')
                     
-                    processo_checkout = await projeto.checkout(branch, diretorio_projeto)
+                    processo_checkout = await projeto.git_checkout(branch, diretorio_projeto)
                     
                     if processo_checkout.returncode == 0:
 
