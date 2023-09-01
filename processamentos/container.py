@@ -2,7 +2,7 @@ import docker
 import inspect
 
 import util.logger as logger
-logger = logger.setup_logger('container.py', '../log/discord.log')
+logger = logger.setup_logger('container.py')
 
 
 async def criar_container(dockerfile_dir, tipo):

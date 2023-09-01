@@ -2,7 +2,7 @@ import psutil
 
 from util import logger
 
-logger = logger.setup_logger("apm.py", "../log/discord.log")
+logger = logger.setup_logger("apm.py")
 
 class monitor_recursos:
     def __init__(self, uso_ram_mb, uso_cpu=None, processos=None):

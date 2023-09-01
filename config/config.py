@@ -7,7 +7,7 @@ import os
 
 from util import logger
 
-logger = logger.setup_logger("config.py", "log/discord.log")
+logger = logger.setup_logger("config.py")
 
 class config():
 

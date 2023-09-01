@@ -6,4 +6,4 @@ cd testes/
 
 #python3 -m unittest test.TestProjetoProcess.test_copiar_funcoes 
 
-python3 -m unittest test.TestProjetoProcess.test_criar_container_funcoes 
+python3 -m unittest test.TestProjetoProcess.test_versionamento_sig

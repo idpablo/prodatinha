@@ -3,7 +3,7 @@ import re
 
 from util import logger
 
-logger = logger.setup_logger("regex.py", "log/discord.log")
+logger = logger.setup_logger("regex.py")
 
 arquivo_atual = inspect.currentframe().f_code.co_filename
 

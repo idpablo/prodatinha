@@ -18,7 +18,7 @@ from processamentos import projeto, apm, container
 import config.config as config
 
 # Setup loggers
-logger = logger.setup_logger("prodatinha.bot", "log/discord.log")
+logger = logger.setup_logger("prodatinha.bot")
 
 # Setup bot
 bot = Bot
@@ -38,13 +38,13 @@ bot = Bot(
 
 # Diretório do projeto Java
 diretorio_projeto = os.getenv("DIRETORIO_PROJETO")
-diretorio_sig = os.getenv("DIRETORIO_SIG")
-diretorio_funcoes = os.getenv("DIRETORIO_FUNCOES")
-arquivo_sig = os.getenv("ARQUIVO_SIG")
-arquivo_funcoes = os.getenv("ARQUIVO_FUNCOES")
-caminho_properties = os.getenv("CAMINHO_PROPERTIES")
-caminho_properties_sig = os.getenv("CAMINHO_PROPERTIES_SIG")
-caminho_properties_funcoes = os.getenv("CAMINHO_PROPERTIES_FUNCOES")
+diretorio_sig = os.getenv("DIRETORIO_ROOT_SIG")
+diretorio_funcoes = os.getenv("DIRETORIO_ROOT_FUNCOES")
+arquivo_sig = os.getenv("ARQUIVO_SIG_WAR")
+arquivo_funcoes = os.getenv("ARQUIVO_FUNCOES_WAR")
+caminho_properties = os.getenv("CAMINHO_PROPERTIES_TEMPLATE")
+caminho_properties_sig = os.getenv("CAMINHO_PROPERTIES_SIG_WAR")
+caminho_properties_funcoes = os.getenv("CAMINHO_PROPERTIES_FUNCOES_WAR")
 
 @bot.event
 async def on_ready():

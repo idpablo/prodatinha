@@ -13,7 +13,7 @@ from datetime import datetime
 
 sys.setrecursionlimit(16385)
 
-logger = logger.setup_logger("projeto.py", "../log/discord.log")
+logger = logger.setup_logger("projeto.py")
 
 
 async def checkout(branch, diretorio_projeto):
@@ -82,31 +82,30 @@ async def versionamento_sig():
         if not os.path.isfile(diretorio_json):
             sys.exit("'version.json' não encontrado, adicione e tente novamente.")
         else:
-
             with open(diretorio_json) as file:
                 
-                versao = json.load(file)
+                version = json.load(file)
 
-                versao_atual = versao["versaosig"]
+                versao_atual = version["versaosig"]
 
-                versao = versao["versaosig"].split('.')
+                versao = version["versaosig"].split('.')
                 versao_concat = int(versao[2]) + 1
                 versao_concat = str(versao_concat)
                 versaosig = versao[0] +"." + versao[1] + "." + versao_concat
 
                 logger.info(f"Versão Atual: {versaosig}")
 
-                cache_atual = versao["cache"]
-                cache = int(versao["cache"])
+                cache_atual = version["cache"]
+                cache = int(version["cache"])
                 cache_novo = cache + 1
 
                 logger.info(f"Cache Atual: {cache_novo}")
             
-            versao['versaosig'] = versaosig
-            versao['cache'] = cache_novo
+            version['versaosig'] = versaosig
+            version['cache'] = cache_novo
 
             with open(diretorio_json, 'w') as arquivo:
-                json.dump(versao, arquivo, indent=4)
+                json.dump(version, arquivo, indent=4)
             
             return versao_atual, versaosig, cache_atual, cache_novo
     
