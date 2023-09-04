@@ -10,7 +10,6 @@
 
 <div style="display: inline_block"><br>
   <img align="center" alt="Prodatinha-Python" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg">
-=======
   <img align="center" alt="Discord" height="30" width="40" src="https://www.svgrepo.com/show/452188/discord.svg">
   <img align="center" alt="Prodatinha-Python" height="30" width="40" src="https://github.com/devicons/devicon/blob/master/icons/ubuntu/ubuntu-plain.svg">
 </div>
@@ -25,25 +24,19 @@ Python3 / NodeJS / pm2
 pip install -r dependecias.txt
 ```
 
-<<<<<<< HEAD
 ### Iniciar aplicação
-=======
-### Execução
 
 ```bash
 pm2 start ecosystem.config.js
 ```
 
-<<<<<<< HEAD
 ### logs prodatinha
 
 ```bash
 pm2 logs prodatinha
 ```
 
-### Monitorar tarefas pn2
-=======
-### Monitorar
+### Monitorar tarefas pm2
 
 ```bash
 pm2 monit
