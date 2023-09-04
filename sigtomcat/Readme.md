@@ -53,3 +53,7 @@ http://localhost:8080/sig/
 # apos o deploy da aplicação ela ficara disponivel no host:
 
 http://172.16.30.8:8080/sigpwebfuncoesBetaAngra/funcoes_setup.jsp
+
+#Criar Container padr
+
+CREATE DATABASE sch WITH OWNER = postgres TEMPLATE = template0 ENCODING = 'LATIN1' LC_COLLATE = 'C' LC_CTYPE = 'C' TABLESPACE = pg_default CONNECTION LIMIT = -1 IS_TEMPLATE = False;

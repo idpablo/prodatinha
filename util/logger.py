@@ -32,9 +32,7 @@ class LoggingFormatter(logging.Formatter):
         formatter = logging.Formatter(format, "%d-%m-%Y %H:%M:%S", style="{")
         return formatter.format(record)
 
-def setup_logger(logger_name):
-    
-    log_file = 'log/discord.log'
+def setup_logger(logger_name,  log_file = 'log/discord.log'):
 
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)

@@ -8,13 +8,12 @@ import inspect
 import subprocess
 
 from util import logger
-
 from datetime import datetime
-
-sys.setrecursionlimit(16385)
 
 logger = logger.setup_logger("projeto.py")
 
+caminho_versao_sig = "/opt/docker/repo/sig/sig/WebContent/version.json"
+caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
 async def git_checkout(branch, diretorio_projeto):
     
@@ -28,13 +27,13 @@ async def git_checkout(branch, diretorio_projeto):
         logger.info(f'Mudando para a branch --> {branch}')
         logger.info(f"Diretorio: {diretorio_atual}")
 
-        processo_git_stash = subprocess.run(["bash", "-c", f"git stash"], capture_output=True)
+        processo_git_stash = subprocess.run(['bash', '-c', f'git stash'], capture_output=True)
 
         if processo_git_stash.returncode == 0:
 
             logger.info(f"Stash: {processo_git_stash.stdout}")
 
-        processo_git_checkout = subprocess.run(["bash", "-c", f"git checkout {branch}"], capture_output=True)
+        processo_git_checkout = subprocess.run(['bash', '-c', f'git checkout {branch}'], capture_output=True)
 
         if processo_git_checkout.returncode == 0:
             
@@ -61,28 +60,60 @@ async def git_criar_branch(diretorio_projeto, nova_branch):
         logger.info(f"Diretorio: {diretorio_atual}")
         logger.info(f'Nome da branch --> {nova_branch}')
 
-        processo_git_checkout = subprocess.run(["bash", "-c", f"git checkout -b {nova_branch}"], capture_output=True)
+        processo_git_checkout = subprocess.run(['bash', '-c', f'git checkout -b {nova_branch}'], capture_output=True)
 
         if processo_git_checkout.returncode == 0:
 
-            logger.info(f'Branch criada: {processo_git_checkout.stdout}')
-        
-        if processo_git_checkout.returncode == 0:
+            logger.info(f'Branch criada: {processo_git_checkout.stderr}')
 
-            logger.info(f'Branch criada: {processo_git_checkout.stdout}')
+            return True
         
     except Exception as exception:
 
         logger.error(f"{funcao_atual} - {exception}")
+        diretorio_atual = os.getcwd()
+
+        logger.info(f"Diretorio: {diretorio_atual}")
+        logger.info(f'Nome da branch --> {nova_branch}')
+
+        return False
 
 #Deve ser implementado
-async def git_commit(diretorio_projeto):
+async def git_commit(diretorio_projeto, versao_sig, versao_funcoes):
     
     funcao_atual = inspect.currentframe().f_code.co_name
 
     try:
         
         logger.info("Iniciando processo de commit")
+
+        os.chdir(diretorio_projeto)
+        diretorio_atual = os.getcwd()
+
+        logger.info(f"Diretorio: {diretorio_atual}")
+
+        processo_git_add_sig = subprocess.run(['bash', '-c', f'git add {caminho_versao_sig}'], capture_output=True)
+        processo_git_add_funcoes = subprocess.run(['bash', '-c', f'git add {caminho_versao_sigpwebfuncoes}'], capture_output=True)
+        
+        if processo_git_add_sig.returncode == 0: logger.info(f'version.json adicionado: {processo_git_add_sig}')
+
+        if processo_git_add_funcoes.returncode == 0: logger.info(f'version.json adicionado: {processo_git_add_funcoes}')
+
+        # processo_git_commit = subprocess.run(['bash', '-c', f'git commit -m "Gerada versão do Sig {versao_sig} e Funções {versao_funcoes}"'], capture_output=True)
+
+        processo_git_commit = await asyncio.create_subprocess_shell(f'git commit -m "Gerada versão do Sig {versao_sig} e Funções {versao_funcoes}"', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        await processo_git_commit.communicate() 
+        
+        if processo_git_commit.returncode == 0:
+
+            logger.info(f'Commit criado: {processo_git_commit}')
+
+            return True
+        
+        else:
+
+            logger.info(f'falha ao executar commit')
+            return False
     
     except Exception as exception:
 
@@ -91,14 +122,13 @@ async def git_commit(diretorio_projeto):
 async def versionamento_sig():
 
     funcao_atual = inspect.currentframe().f_code.co_name
-    diretorio_json = "/opt/docker/repo/sig/sig/WebContent/version.json"
 
     try:
 
-        if not os.path.isfile(diretorio_json):
+        if not os.path.isfile(caminho_versao_sig):
             sys.exit("'version.json' não encontrado, adicione e tente novamente.")
         else:
-            with open(diretorio_json) as file:
+            with open(caminho_versao_sig) as file:
                 
                 version = json.load(file)
 
@@ -120,7 +150,7 @@ async def versionamento_sig():
             version['versaosig'] = versaosig
             version['cache'] = cache_novo
 
-            with open(diretorio_json, 'w') as arquivo:
+            with open(caminho_versao_sig, 'w') as arquivo:
                 json.dump(version, arquivo, indent=4)
             
             return versao_atual, versaosig, cache_atual, cache_novo
@@ -132,7 +162,6 @@ async def versionamento_sig():
 async def versao_atual_funcoes():
 
     funcao_atual = inspect.currentframe().f_code.co_name
-    caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
     try:
 
