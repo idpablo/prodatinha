@@ -1,7 +1,5 @@
 import os
 import inspect
-import asyncio
-import requests
 import subprocess
 
 import util.logger as logger
@@ -9,12 +7,15 @@ logger = logger.setup_logger('container.py')
 
 from bs4 import BeautifulSoup
 
-def executar_curl(url):
+def executar_curl(url: str):
+   
     try:
+
+        logger.info(f'Chamando url pelo curl -> {url}')
         
-        arquivo_saida = './saida.txt'
+        arquivo_saida = './saida.txt' 
         linhas_de_erro = []
-        arquivos_txt = []
+        # arquivos_txt = []
 
         resultado = subprocess.run(['curl', '-s', url], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, encoding='iso-8859-1')
         saida = resultado.stdout
@@ -24,20 +25,18 @@ def executar_curl(url):
 
         if status == 0:
 
-            # for linha in saida:
-            #     linha_sem_tags = BeautifulSoup(linha, 'html.parser')
+            with open(arquivo_saida, "w") as arquivo: # pyright: ignore
+            
+                for linha in linhas:
+
+                    linha_sem_tags = BeautifulSoup(linha, 'html.parser').get_text()
+
+                    if 'erro' in linha_sem_tags.lower():
+                        
+                        linhas_de_erro.append(linha_sem_tags) # pyright: ignore
+                        logger.info(linha_sem_tags)
                 
-            #     if 'ERRO' in linha_sem_tags:
-            #         linhas_de_erro.append(linha)
-
-            # linhas_encontradas = linhas_de_erro
-
-            for linha in linhas:
-
-
-                if 'ERRO' in linha:
-                    linhas_de_erro.append(linha) 
-                    logger.info(linha)
+                        arquivo.write(f'{linha_sem_tags}\n')
             
             return True
 
@@ -53,9 +52,9 @@ def executar_curl(url):
         logger.error(f"Erro inesperado: {e}")
         return False 
 
-def capturar_linhas_de_erro(diretorio_arquivo):
+def capturar_linhas_de_erro(diretorio_arquivo: str): 
 
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name  # pyright: ignore
     
     try:
 
@@ -73,7 +72,7 @@ def capturar_linhas_de_erro(diretorio_arquivo):
         
         for arquivo in lista_arquivos:
             if arquivo.endswith(".txt"):
-                arquivos_txt.append(arquivo)
+                arquivos_txt.append(arquivo)  # pyright: ignore
 
         if os.path.isfile(nome_arquivo):
 
@@ -84,12 +83,12 @@ def capturar_linhas_de_erro(diretorio_arquivo):
                     linha_sem_tags = BeautifulSoup(linha, 'html.parser').get_text()
                     
                     if 'erro' in linha_sem_tags.lower():
-                        linhas_de_erro.append(linha)
+                        linhas_de_erro.append(linha)  # pyright: ignore
 
             linhas_encontradas = linhas_de_erro
 
-            for linha in linhas_encontradas:
-                logger.info(linha.strip()) 
+            for linha in linhas_encontradas:  # pyright: ignore
+                logger.info(linha.strip())   # pyright: ignore
             
             return True
         

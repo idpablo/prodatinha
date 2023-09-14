@@ -5,15 +5,15 @@ import json
 import sys
 import os
 
-from util import logger
+import util.logger as logger
 
 logger = logger.setup_logger("config.py")
 
 class config():
 
-    def load_config():
+    def load_config():  # pyright: ignore
 
-        funcao_atual = inspect.currentframe().f_code.co_name
+        funcao_atual = inspect.currentframe().f_code.co_name  # pyright: ignore
 
         try:
 
@@ -22,7 +22,7 @@ class config():
             else:
                 with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
                     
-                    logger.info(f"{funcao_atual} - Leitura do arquivo config.json realidaza!")
+                    logger.info(f"{funcao_atual} - Leitura do arquivo config.json realidaza!")   # pyright: ignore
 
                     config = json.load(file)
 
@@ -30,9 +30,9 @@ class config():
         
         except Exception as exception:
 
-            logger.error(f"{funcao_atual} - {exception}")
+            logger.error(f"{funcao_atual} - {exception}")  # pyright: ignore
 
-    def load_config_gpt():
+    def load_config_gpt():  # pyright: ignore
 
         try:
 
@@ -46,4 +46,4 @@ class config():
         
         except Exception as exception:
             
-            logger.error(f"{exception}")
+            logger.error(f"{exception}")  # pyright: ignore

@@ -1,0 +1,19 @@
+{
+    "pythonVersion": "3.8",
+    "reportMissingImports": true,
+    "useLibraryCodeForTypes": true,
+    "include": ["**/*.py"],
+    "exclude": ["**/__pycache__/*"],
+    "pythonPath": ["."],
+    "typeCheckingMode": "strict",
+    "extraPaths": ["./img"],
+    "executionEnvironments": [
+      {
+        "root": "./",
+        "name": "ubuntu38",
+        "pythonPath": ["."],
+        "pythonVersion": "3.8"
+      }
+    ]
+  }
+  

@@ -1,6 +1,7 @@
-from googletrans import Translator
+from googletrans import Translator # pyright: ignore
 
-async def traduzir_texto(texto, destino='pt'):
+async def traduzir_texto(texto: str) -> str:
+    destino='pt'
     translator = Translator()
     traducao = translator.translate(texto, dest=destino)
-    return traducao.text
+    return traducao # pyright: ignore

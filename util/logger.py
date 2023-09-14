@@ -22,7 +22,7 @@ class LoggingFormatter(logging.Formatter):
         logging.CRITICAL: red + bold,
     }
 
-    def format(self, record):
+    def format(self, record): # pyright: ignore
         log_color = self.COLORS[record.levelno]
         format = "(black){asctime}(reset) (levelcolor){levelname:<0}(reset) (green){name}(reset) {message}"
         format = format.replace("(black)", self.black + self.bold)
@@ -32,7 +32,7 @@ class LoggingFormatter(logging.Formatter):
         formatter = logging.Formatter(format, "%d-%m-%Y %H:%M:%S", style="{")
         return formatter.format(record)
 
-def setup_logger(logger_name,  log_file = 'log/discord.log'):
+def setup_logger(logger_name: str,  log_file: str = 'log/discord.log'):
 
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)

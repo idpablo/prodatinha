@@ -12,6 +12,11 @@ cd testes/
 
 # python3 -m unittest test.TestContainerProcess.test_criar_container_funcoes
 # python3 -m unittest test.TestExecutarFuncoes.test_executar_funcoes
-python3 -m unittest test.TestExecutarFuncoes.test_executar_funcoes_capturar_saida
+# python3 -m unittest test.TestExecutarFuncoes.test_executar_funcoes_capturar_saida
+
+python3 -m unittest test.TestExecutarFuncoes.test_gerar_funcoes
+
+# python3 -m unittest test.TestExecutarFuncoes.test_executar_funcoes
+
 
 

@@ -1,0 +1,18 @@
+Log de ERROS de execução
+******VERIFICANDO TABELA ERROS_COLARE******
+INFO id - 1008: alter table "SCH"."ERROS_COLARE" enable trigger user; 
+******VERIFICANDO TABELA ERROS_JUNTADA******
+INFO id - 1009: alter table "SCH"."ERROS_JUNTADA" enable trigger user; 
+******VERIFICANDO TABELA EVENTO_ESOCIAL_ERRO_PROCESSAMENTO******
+INFO id - 1027: alter table "SCH"."EVENTO_ESOCIAL_ERRO_PROCESSAMENTO" enable trigger user; 
+******VERIFICANDO TABELA EVENTO_REINF_ERRO_PROCESSAMENTO******
+INFO id - 1031: alter table "SCH"."EVENTO_REINF_ERRO_PROCESSAMENTO" enable trigger user; 
+INFO id - 1032: do $$begin if not exists (select 1 from pg_catalog.pg_constraint con  inner join pg_catalog.pg_class rel  on rel.oid = con.conrelid  inner join pg_catalog.pg_namespace nsp  on nsp.oid = connamespace  where nsp.nspname = 'SCH'  and rel.relname = 'EVENTO_REINF_ERRO_PROCESSAMENTO' and con.contype = 'p' ) then alter table "SCH"."EVENTO_REINF_ERRO_PROCESSAMENTO" add constraint "EVENTO_REINF_ERRO_PROCESSAMENTO_PK" primary key ("ID"); end if; end $$;
+INFO id - 2787: alter table "SCH"."EVENTO_ESOCIAL_ERRO_PROCESSAMENTO" add constraint fk_EVENTO_ESOCIAL_ERRO_PROCESSAMENTO_LOG_ENVIO_EVENTOS_ESOCIAL_ITENS_fk_evento_id_evento foreign key ("ID_LOG_ENVIO_EVENTOS_ESOCIAL_ITENS") references "SCH"."LOG_ENVIO_EVENTOS_ESOCIAL_ITENS" ("ID")
+INFO id - 2789: alter table "SCH"."EVENTO_REINF_ERRO_PROCESSAMENTO" add constraint fk_EVENTO_REINF_ERRO_PROCESSAMENTO_LOG_ENVIO_EVENTOS_REINF_ITENS_fk_evento_id_evento foreign key ("ID_LOG_ENVIO_EVENTOS_REINF_ITENS") references "SCH"."LOG_ENVIO_EVENTOS_REINF_ITENS" ("ID")
+INFO id - 3011: create  index "EVENTO_ESOCIAL_ERRO_PROCESSAMENTO_INDEX_ID_EVENTO" on "SCH"."EVENTO_ESOCIAL_ERRO_PROCESSAMENTO" using btree ("ID","ID_LOG_ENVIO_EVENTOS_ESOCIAL_ITENS") ;
+INFO id - 3013: create  index "EVENTO_REINF_ERRO_PROCESSAMENTO_INDEX_ID_EVENTO" on "SCH"."EVENTO_REINF_ERRO_PROCESSAMENTO" using btree ("ID","ID_LOG_ENVIO_EVENTOS_REINF_ITENS") ;
+ ---- LOG ERROS ------ 
+ERRO id - 3065: ERROR: column "PNCP_USUARIO" does not exist
+ERRO id - 3093: ERROR: column "ID" does not exist
+ERRO id - 3099: ERROR: column "ID_SOLICITACAO_COMPRA" does not exist

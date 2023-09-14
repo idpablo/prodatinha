@@ -6,22 +6,22 @@ import zipfile
 import asyncio
 import inspect
 import subprocess
-
-from util import logger
+import util.logger as logger
 from datetime import datetime
+from typing import Union
 
-logger = logger.setup_logger("projeto.py")
+logger = logger.setup_logger("projeto.py", 'log/discord.log')  # pyright: ignore
 
 caminho_versao_sig = "/opt/docker/repo/sig/sig/WebContent/version.json"
 caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
-async def git_checkout(branch, diretorio_projeto):
+async def git_checkout(branch: str, diretorio_projeto: str): 
     
     try:
 
-        funcao_atual = inspect.currentframe().f_code.co_name
+        funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
-        os.chdir(diretorio_projeto)
+        os.chdir(diretorio_projeto) 
         diretorio_atual = os.getcwd()
 
         logger.info(f'Mudando para a branch --> {branch}')
@@ -33,23 +33,32 @@ async def git_checkout(branch, diretorio_projeto):
 
             logger.info(f"Stash: {processo_git_stash.stdout}")
 
-        processo_git_checkout = subprocess.run(['bash', '-c', f'git checkout {branch}'], capture_output=True)
+            processo_git_checkout_master = subprocess.run(['bash', '-c', f'git checkout master'], capture_output=True)
 
-        if processo_git_checkout.returncode == 0:
-            
-            logger.info(f"Branch: {processo_git_checkout.stdout}")
+            resultado_pull = subprocess.run(['bash', '-c', 'git pull'], capture_output=True, text=True)
 
-            return processo_git_checkout
+            logger.info(f"Mudando para master: {processo_git_checkout_master.stdout}")
+            logger.info(f"Atualizando repositorio local com a origin -> master: {resultado_pull.stdout}")
+        
+            if processo_git_checkout_master.returncode == 0 and resultado_pull.returncode == 0:
+        
+                processo_git_checkout = subprocess.run(['bash', '-c', f'git checkout {branch}'], capture_output=True)
+
+                if processo_git_checkout.returncode == 0:
+                    
+                    logger.info(f"Branch: {processo_git_checkout.stdout}")
+
+                    return processo_git_checkout
     
     except Exception as exeption:
         
-        logger.error(f"{funcao_atual} - {exeption}")
+        logger.error(f"{funcao_atual} - {exeption}") # pyright: ignore
         return("Erro ao alterar branch")
 
 #Deve ser implementado
-async def git_criar_branch(diretorio_projeto, nova_branch):
+async def git_criar_branch(diretorio_projeto: str, nova_branch: str):
     
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
     try:
         logger.info("Criando nova branch pra gerar o build da aplicação")
@@ -79,9 +88,9 @@ async def git_criar_branch(diretorio_projeto, nova_branch):
         return False
 
 #Deve ser implementado
-async def git_commit(diretorio_projeto, versao_sig, versao_funcoes):
+async def git_commit(diretorio_projeto: str, versao_sig: str, versao_funcoes: str):
     
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
     try:
         
@@ -121,7 +130,7 @@ async def git_commit(diretorio_projeto, versao_sig, versao_funcoes):
 
 async def versionamento_sig():
 
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
     try:
 
@@ -161,7 +170,7 @@ async def versionamento_sig():
 
 async def versao_atual_funcoes():
 
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
     try:
 
@@ -191,7 +200,7 @@ async def versao_atual_funcoes():
 
 async def versionamento_funcoes():
 
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
     caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
     try:
@@ -218,9 +227,9 @@ async def versionamento_funcoes():
 
         logger.error(f"{funcao_atual} - {exception}")
 
-async def configurar_ambiente(diretorio_projeto, diretorio_sig):
+async def configurar_ambiente(diretorio_projeto: str, diretorio_aplicacao: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_names
+    funcao_atual = inspect.currentframe().f_code.co_names # pyright: ignore
 
     try:
 
@@ -245,17 +254,17 @@ async def configurar_ambiente(diretorio_projeto, diretorio_sig):
             
             logger.error(f"{funcao_atual} - Erro ao executar git pull: {resultado_pull.stderr.strip()}")
 
-        if not os.path.isdir(diretorio_sig):
-            logger.info(f"Diretório inválido: {diretorio_sig}")
+        if not os.path.isdir(diretorio_aplicacao):
+            logger.info(f"Diretório inválido: {diretorio_aplicacao}")
             return
 
-        os.chdir(diretorio_sig)
+        os.chdir(diretorio_aplicacao)
 
-        diretorio_atual_sig = os.getcwd()
-        logger.info(f"Diretório atual (sig): {diretorio_atual_sig}")
+        diretorio_aplicacao_atual = os.getcwd()
+        logger.info(f"Diretório atual aplicação: {diretorio_aplicacao_atual}")
 
-        if diretorio_atual_sig != diretorio_sig:
-            logger.info(f"Diretório incorreto. Esperado: {diretorio_sig}")
+        if diretorio_aplicacao_atual != diretorio_aplicacao:
+            logger.info(f"Diretório incorreto. Esperado: {diretorio_aplicacao}")
             return
         
         return True;
@@ -265,7 +274,7 @@ async def configurar_ambiente(diretorio_projeto, diretorio_sig):
 
 async def gradle_clean():
     try:
-        funcao_atual = inspect.currentframe().f_code.co_name
+        funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
         logger.info(f"Iniciando clean do projeto")
 
@@ -281,12 +290,12 @@ async def gradle_clean():
                 logger.error(f"{funcao_atual} - Erro ao executar o gradle clean.")
 
     except Exception as exception:
-        logger.error(f"{funcao_atual} - {exception}")
+        logger.error(f"{funcao_atual} - {exception}")  # pyright: ignore
         await asyncio.sleep(5)
 
 async def gradle_war():
     
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
     try:
         
@@ -312,7 +321,7 @@ async def gradle_war():
         logger.error(f"{funcao_atual} - {exception}")
         await asyncio.sleep(5)
 
-async def adicionar_properties(caminho_war, caminho_no_war, caminho_properties):
+async def adicionar_properties(caminho_war: Union[str, str], caminho_no_war: str, caminho_properties: str):
     
     arquivo_war = os.path.abspath(caminho_war)
     arquivo_properties = os.path.abspath(caminho_properties)
@@ -328,12 +337,13 @@ async def adicionar_properties(caminho_war, caminho_no_war, caminho_properties):
     except Exception as e:
         logger.error(f"Ocorreu um erro ao adicionar o arquivo: {e}")
 
-async def copiar_war(caminho_war, destino):
+async def copiar_war(caminho_war: str, destino: str):
     
-    arquivo_war = os.path.abspath(caminho_war)
-    arquivo_destino = os.path.abspath(destino)
+    arquivo_war = os.path.abspath(caminho_war) # pyright: ignore
+    arquivo_destino = os.path.abspath(destino) # pyright: ignore
 
     try:
+
         os.chdir(caminho_war)
         diretorio_atual = os.getcwd()
         logger.info(f"Diretorio atual: {diretorio_atual}")
@@ -347,7 +357,7 @@ async def copiar_war(caminho_war, destino):
                 logger.info(f"Diretorio destino: {diretorio_atual}")
                 processo = await asyncio.create_subprocess_shell(f'cp *.war {destino}', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
                 
-                resultado_processo = await processo.communicate()
+                resultado_processo = await processo.communicate() # pyright: ignore
 
                 if processo.returncode == 0:
                     
@@ -366,9 +376,9 @@ async def copiar_war(caminho_war, destino):
 
         logger.error(f"Ocorreu um erro ao adicionar o arquivo: {e}")
 
-async def compactar_arquivo(caminho_diretorio, nome_arquivo):
+async def compactar_arquivo(caminho_diretorio: str, nome_arquivo: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
     try:
 
@@ -448,9 +458,9 @@ async def compactar_arquivo(caminho_diretorio, nome_arquivo):
         
         logger.error(f"{funcao_atual} - {exception}")
 
-async def disponibilizar_arquivo(caminho_arquivo, tipo):
+async def disponibilizar_arquivo(caminho_arquivo: str, caminho_disponibilizar_arquivo: str, tipo: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_name
+    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
 
     try:
 
@@ -461,7 +471,7 @@ async def disponibilizar_arquivo(caminho_arquivo, tipo):
         
         for arquivo in lista_arquivos:
             if arquivo.endswith(".rar"):
-                arquivos_rar.append(arquivo)
+                arquivos_rar.append(arquivo) # pyright: ignore
         
         if arquivos_rar:
         
@@ -474,7 +484,7 @@ async def disponibilizar_arquivo(caminho_arquivo, tipo):
 
             while True:
 
-                processo = await asyncio.create_subprocess_shell(f"mv {arquivos_rar[0]} /repo/disponibilizar_arquivos/arquivos_build/{tipo}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                processo = await asyncio.create_subprocess_shell(f"mv {arquivos_rar[0]} {caminho_disponibilizar_arquivo}{tipo}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
                 await processo.communicate()
                 
                 if processo.returncode == 0:

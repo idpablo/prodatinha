@@ -1,15 +1,15 @@
 import inspect
 import re
 
-from util import logger
+import util.logger as logger
 
-logger = logger.setup_logger("regex.py")
+logger = logger.setup_logger("regex.py", 'log/discord.log')
 
-arquivo_atual = inspect.currentframe().f_code.co_filename
+arquivo_atual = inspect.currentframe().f_code.co_filename # pyright: ignore
 
 
 class ResultadoRegex:
-    def __init__(self, args, returncode, stdout, stderr, task=None):
+    def __init__(self, args: str, returncode: int, stdout: str, stderr: str, task: None = None): 
         self.args = args
         self.returncode = returncode
         self.stdout = stdout
@@ -20,7 +20,7 @@ class ResultadoRegex:
         else:
             self.task = None
 
-async def regex_git_checkout(texto):
+async def regex_git_checkout(texto: str):
     try:
         logger.info(f"Regex iniciado")
         logger.info(f"{arquivo_atual} - Texto: {texto}")
@@ -44,7 +44,7 @@ async def regex_git_checkout(texto):
         logger.error(f'{arquivo_atual} - {exception}')
         return None
 
-async def regex_saida_war(array):
+async def regex_saida_war(array: str):
     try:
 
         padrao = r"(Execution Time.*[\s\S]*?up-to-date)"  
