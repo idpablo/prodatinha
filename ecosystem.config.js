@@ -7,7 +7,11 @@ module.exports = {
         cwd: '/repo/prodatinha',
         watch: false, 
         autorestart: false,
-        ignore_watch: ['node_modules', 'logs', '.git', '.vscode'],
+        max_memory_restart: '200M',
+        env: {
+          PYTHONPATH: '/repo/prodatinha',
+        },
+        ignore_watch: ['logs', '.git', '.vscode'],
       },
     ],
   };

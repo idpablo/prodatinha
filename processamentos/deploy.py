@@ -1,102 +1,84 @@
-import os
-import inspect
+import re
+import asyncio
 import subprocess
-
-import util.logger as logger
-logger = logger.setup_logger('container.py')
 
 from bs4 import BeautifulSoup
 
-def executar_curl(url: str):
+import util.logger as logger
+logger = logger.setup_logger('deploy.py')
+
+async def executar_curl(contexto, url):  
    
     try:
 
+        linha_log_body_funcoes = []
+        linha_log_erros_funcoes = []
+
         logger.info(f'Chamando url pelo curl -> {url}')
-        
-        arquivo_saida = './saida.txt' 
-        linhas_de_erro = []
-        # arquivos_txt = []
 
-        resultado = subprocess.run(['curl', '-s', url], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, encoding='iso-8859-1')
-        saida = resultado.stdout
-        status = resultado.returncode
-
-        linhas = saida.splitlines()
-
-        if status == 0:
-
-            with open(arquivo_saida, "w") as arquivo: # pyright: ignore
+        while True:
             
-                for linha in linhas:
+            processo = await asyncio.create_subprocess_shell(f'curl {url}', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, )
 
-                    linha_sem_tags = BeautifulSoup(linha, 'html.parser').get_text()
+            stdout, stderr = await processo.communicate()
 
-                    if 'erro' in linha_sem_tags.lower():
-                        
-                        linhas_de_erro.append(linha_sem_tags) # pyright: ignore
-                        logger.info(linha_sem_tags)
-                
-                        arquivo.write(f'{linha_sem_tags}\n')
-            
-            return True
+            saida = stdout.decode('iso-8859-1')
 
-        return False
+            if processo.returncode == 0:
+
+                resultado_curl = saida.splitlines()
+
+                idx = 0
+                linha_log_info_encontrada = False 
+                linha_log_erros_encontrada = False 
+                dentro_do_body = False
+               
+                for linha in resultado_curl:
+
+                    linha_sem_tag_html = re.sub(r'<[^>]*>', '', linha)
+
+                    if linha_sem_tag_html != '':
+
+                        if '<body>' in linha:
+                            dentro_do_body = True
+                            continue
+                        elif '</body>' in linha:
+                            dentro_do_body = False
+
+                        if 'INFO' or '******' in linha:
+                            linha_log_info_encontrada = True 
+
+                        if 'LOG ERROS' in linha:
+                            linha_log_erros_encontrada = True 
+
+                        if dentro_do_body:
     
+                            linha_log_body_funcoes.append(linha_sem_tag_html)
+                            logger.info(f'{idx}: {linha_sem_tag_html}')
+                            await contexto.send(f'Informações sobre a base onde o funções está sendo executado:\n     └>{linha_sem_tag_html}')
+                        
+                        # if linha_log_info_encontrada:
+                            
+                        #     logger.info(f'{idx}: {linha_sem_tag_html}')
+
+                        if linha_log_erros_encontrada:
+                                    
+                            linha_log_erros_funcoes.append(linha_sem_tag_html)
+                            logger.info(f'Linha com erro funcoes - {idx}: {linha_sem_tag_html}')
+
+                    idx += 1
+
+            logger.info(f'Execução SigFunções finalizado!')
+            return linha_log_erros_funcoes
+            
     except subprocess.CalledProcessError as e:
         
-        logger.info(f"Erro ao executar o comando curl: {e}")
+        logger.info(f'Erro ao executar o comando curl: {e}')
         return False
     
     except Exception as e:
         
-        logger.error(f"Erro inesperado: {e}")
+        logger.error(f'Erro inesperado: {e}')
         return False 
 
-def capturar_linhas_de_erro(diretorio_arquivo: str): 
-
-    funcao_atual = inspect.currentframe().f_code.co_name  # pyright: ignore
-    
-    try:
-
-        nome_arquivo = 'resposta.txt'
-
-        linhas_de_erro = []
-        arquivos_txt = []
-
-        os.chdir(diretorio_arquivo)
-        diretorio_atual = os.getcwd()
-
-        logger.info(f"Diretorio atual: {diretorio_atual}")
-
-        lista_arquivos = os.listdir(diretorio_arquivo)
-        
-        for arquivo in lista_arquivos:
-            if arquivo.endswith(".txt"):
-                arquivos_txt.append(arquivo)  # pyright: ignore
-
-        if os.path.isfile(nome_arquivo):
-
-            logger.info(f'Arquivo {nome_arquivo} encontrado.')
-        
-            with open(nome_arquivo, 'r', encoding='iso-8859-1') as arquivo_texto:
-                for linha in arquivo_texto:
-                    linha_sem_tags = BeautifulSoup(linha, 'html.parser').get_text()
-                    
-                    if 'erro' in linha_sem_tags.lower():
-                        linhas_de_erro.append(linha)  # pyright: ignore
-
-            linhas_encontradas = linhas_de_erro
-
-            for linha in linhas_encontradas:  # pyright: ignore
-                logger.info(linha.strip())   # pyright: ignore
-            
-            return True
-        
-        return False
-    
-    except Exception as exeption:
-
-        logger.error(f"{funcao_atual} - Erro ao separar linhas erro - {exeption}")
-    
-        return False
 

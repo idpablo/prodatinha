@@ -1,4 +1,4 @@
-import docker # pyright: ignore
+import docker 
 import inspect
 import threading
 import time 
@@ -10,15 +10,15 @@ container_semaforo = threading.Semaphore()
 
 def docker_buscar_container(container_nome: str):
     
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
 
-        client = docker.from_env() # pyright: ignore
-        container = client.containers.get(container_nome) # pyright: ignore
+        client = docker.from_env() 
+        container = client.containers.get(container_nome) 
         return True
     
-    except docker.errors.NotFound as e: # pyright: ignore
+    except docker.errors.NotFound as e: 
 
         logger.info(f"{funcao_atual} - O container '{container_nome}' não existe. - {e}")
     
@@ -26,17 +26,17 @@ def docker_buscar_container(container_nome: str):
 
 def docker_parar_container(container_nome: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
-        client = docker.from_env() # pyright: ignore
-        container = client.containers.get(container_nome) # pyright: ignore
+        client = docker.from_env() 
+        container = client.containers.get(container_nome) 
 
-        if container.status == "running": # pyright: ignore
+        if container.status == "running": 
             
             logger.info(f"O container '{container_nome}' esta em excução.")
             logger.info(f"O container '{container_nome}' sera parado.") 
-            container.stop() # pyright: ignore
+            container.stop() 
             
             while docker_buscar_container(container_nome):
                 logger.info(f"Aguardando o container '{container_nome}' finalizar a execução...")
@@ -50,7 +50,7 @@ def docker_parar_container(container_nome: str):
         
         return False
 
-    except docker.errors as e: # pyright: ignore
+    except docker.errors as e: 
     
         logger.info(f"{funcao_atual} - O container '{container_nome}' não existe. - {e}")
 
@@ -58,7 +58,7 @@ def docker_parar_container(container_nome: str):
 
 async def docker_criar_container(dockerfile_dir: str, container_nome: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
 
@@ -67,16 +67,16 @@ async def docker_criar_container(dockerfile_dir: str, container_nome: str):
         if resultado_buscar_contairner:
         
             logger.info(f"O container '{container_nome}' já existe.")
-            resultado_parar_container = docker_parar_container(container_nome) # pyright: ignore
+            resultado_parar_container = docker_parar_container(container_nome) 
             
-        client = docker.from_env() # pyright: ignore
+        client = docker.from_env() 
 
         # Construa a imagem a partir do Dockerfile
-        image, build_logs = client.images.build(path=dockerfile_dir, tag=container_nome) # pyright: ignore
+        image, build_logs = client.images.build(path=dockerfile_dir, tag=container_nome) 
 
         # Exiba os logs de construção
-        for log_line in build_logs: # pyright: ignore
-            logger.info(log_line) # pyright: ignore
+        for log_line in build_logs: 
+            logger.info(log_line) 
         
         # Configurações do contêiner
         container_config = {
@@ -89,11 +89,9 @@ async def docker_criar_container(dockerfile_dir: str, container_nome: str):
             'network_mode': 'bridge'
         }
 
-        # Crie um contêiner usando a imagem criada
-        container = client.containers.run(**container_config) # pyright: ignore
+        container = client.containers.run(**container_config) 
 
-        # Exiba o ID do contêiner criado
-        logger.info(f"ID do contêiner criado: {container.id}") # pyright: ignore
+        logger.info(f"ID do contêiner criado: {container.id}") 
 
         return True
 
@@ -105,24 +103,23 @@ async def docker_criar_container(dockerfile_dir: str, container_nome: str):
 
 def capturar_logs_com_erro_pelo_nome(container_name: str):
     try:
-        client = docker.from_env()  # Crie um cliente Docker # pyright: ignore
-        container = client.containers.get(container_name)  # Obtenha o objeto do container pelo nome # pyright: ignore
-        logs = container.logs(stream=True, follow=True)  # Capture os logs e decode para texto # pyright: ignore
+        client = docker.from_env() 
+        container = client.containers.get(container_name)  
+        logs = container.logs(stream=True, follow=True) 
         linhas_de_erro = []
 
-        # Analise as linhas dos logs
-        for linha in logs.split('\n'): # pyright: ignore
-            if 'erro' in linha.lower() or 'exception' in linha.lower(): # pyright: ignore
-                linhas_de_erro.append(linha) # pyright: ignore
+        for linha in logs.split('\n'): 
+            if 'erro' in linha.lower() or 'exception' in linha.lower(): 
+                linhas_de_erro.append(linha) 
 
-        for linha in linhas_de_erro: # pyright: ignore
+        for linha in linhas_de_erro: 
             logger.info(f"LOG FUNCOES - {linha}")
         
         return True
     
-    except docker.errors.NotFound as e: # pyright: ignore
+    except docker.errors.NotFound as e: 
 
-        logger.error(f"Container não encontrado: {str(e)}") # pyright: ignore
+        logger.error(f"Container não encontrado: {str(e)}") 
         return False
     
     except Exception as e:
@@ -132,18 +129,16 @@ def capturar_logs_com_erro_pelo_nome(container_name: str):
 
 def monitorar_logs_em_tempo_real(container_name: str):
     try:
-        client = docker.from_env()  # Crie um cliente Docker # pyright: ignore
-        container = client.containers.get(container_name)  # Obtenha o objeto do container pelo nome # pyright: ignore
+        client = docker.from_env()  
+        container = client.containers.get(container_name)  
 
-        # Inicie a captura de logs em tempo real
-        for log in container.logs(stream=True, follow=True): # pyright: ignore
-            log = log.decode('utf-8')  # Decodifique o log para texto # pyright: ignore
-            # Faça o que desejar com o log (por exemplo, imprima na tela) 
-            logger.info(log, end='') # pyright: ignore
+        for log in container.logs(stream=True, follow=True): 
+            log = log.decode('utf-8')  
+            logger.info(log, end='') 
 
         return True
 
-    except docker.errors.NotFound as e: # pyright: ignore
+    except docker.errors.NotFound as e: 
     
         logger.error(f"Container não encontrado: {e}") 
         return False

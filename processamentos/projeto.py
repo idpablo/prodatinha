@@ -10,7 +10,7 @@ import util.logger as logger
 from datetime import datetime
 from typing import Union
 
-logger = logger.setup_logger("projeto.py", 'log/discord.log')  # pyright: ignore
+logger = logger.setup_logger("projeto.py", 'log/discord.log')  
 
 caminho_versao_sig = "/opt/docker/repo/sig/sig/WebContent/version.json"
 caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
@@ -19,7 +19,7 @@ async def git_checkout(branch: str, diretorio_projeto: str):
     
     try:
 
-        funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+        funcao_atual = inspect.currentframe().f_code.co_name 
 
         os.chdir(diretorio_projeto) 
         diretorio_atual = os.getcwd()
@@ -52,13 +52,13 @@ async def git_checkout(branch: str, diretorio_projeto: str):
     
     except Exception as exeption:
         
-        logger.error(f"{funcao_atual} - {exeption}") # pyright: ignore
+        logger.error(f"{funcao_atual} - {exeption}") 
         return("Erro ao alterar branch")
 
 #Deve ser implementado
 async def git_criar_branch(diretorio_projeto: str, nova_branch: str):
     
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
         logger.info("Criando nova branch pra gerar o build da aplicação")
@@ -90,7 +90,7 @@ async def git_criar_branch(diretorio_projeto: str, nova_branch: str):
 #Deve ser implementado
 async def git_commit(diretorio_projeto: str, versao_sig: str, versao_funcoes: str):
     
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
         
@@ -130,7 +130,7 @@ async def git_commit(diretorio_projeto: str, versao_sig: str, versao_funcoes: st
 
 async def versionamento_sig():
 
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
 
@@ -170,7 +170,7 @@ async def versionamento_sig():
 
 async def versao_atual_funcoes():
 
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
 
@@ -200,26 +200,28 @@ async def versao_atual_funcoes():
 
 async def versionamento_funcoes():
 
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
     caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
     try:
 
-        nova_data = datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
-        nova_data_nome = datetime.now().strftime("%d-%m-%Y")
+        nova_data = datetime.now().strftime("%d/%m/%Y - %H:00:00")
+        nova_versao = datetime.now().strftime("%Y.%m.%d")
 
         with open(caminho_versao_sigpwebfuncoes, 'r', encoding='cp1252') as f:
             conteudo = f.read()
 
         conteudo = re.sub(r'DATA\s*=\s*".*"', f'DATA="{nova_data}"', conteudo)
+        conteudo = re.sub(r'VERSAO\s*=\s*".*?"', f'VERSAO="{nova_versao}"', conteudo)
 
         with open(caminho_versao_sigpwebfuncoes, 'w', encoding='cp1252') as f:
             f.write(conteudo)
 
         logger.info(f"Data atualizada: {nova_data}")
+        logger.info(f"Data atualizada: {nova_versao}")
 
         if nova_data:
-                return nova_data_nome
+                return nova_versao, nova_data
         else:
             return None, None
         
@@ -229,7 +231,7 @@ async def versionamento_funcoes():
 
 async def configurar_ambiente(diretorio_projeto: str, diretorio_aplicacao: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_names # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_names 
 
     try:
 
@@ -241,10 +243,6 @@ async def configurar_ambiente(diretorio_projeto: str, diretorio_aplicacao: str):
 
         diretorio_atual = os.getcwd()
         logger.info(f"Diretório atual: {diretorio_atual}")
-
-        if diretorio_atual != diretorio_projeto:
-            logger.info(f"Diretório incorreto. Esperado: {diretorio_projeto}")
-            return
 
         resultado_pull = subprocess.run(["bash", "-c", 'git pull'], capture_output=True, text=True)
         
@@ -262,10 +260,6 @@ async def configurar_ambiente(diretorio_projeto: str, diretorio_aplicacao: str):
 
         diretorio_aplicacao_atual = os.getcwd()
         logger.info(f"Diretório atual aplicação: {diretorio_aplicacao_atual}")
-
-        if diretorio_aplicacao_atual != diretorio_aplicacao:
-            logger.info(f"Diretório incorreto. Esperado: {diretorio_aplicacao}")
-            return
         
         return True;
 
@@ -274,7 +268,7 @@ async def configurar_ambiente(diretorio_projeto: str, diretorio_aplicacao: str):
 
 async def gradle_clean():
     try:
-        funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+        funcao_atual = inspect.currentframe().f_code.co_name 
 
         logger.info(f"Iniciando clean do projeto")
 
@@ -290,12 +284,12 @@ async def gradle_clean():
                 logger.error(f"{funcao_atual} - Erro ao executar o gradle clean.")
 
     except Exception as exception:
-        logger.error(f"{funcao_atual} - {exception}")  # pyright: ignore
+        logger.error(f"{funcao_atual} - {exception}")  
         await asyncio.sleep(5)
 
 async def gradle_war():
     
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
         
@@ -321,14 +315,16 @@ async def gradle_war():
         logger.error(f"{funcao_atual} - {exception}")
         await asyncio.sleep(5)
 
-async def adicionar_properties(caminho_war: Union[str, str], caminho_no_war: str, caminho_properties: str):
+async def adicionar_properties(caminho_war: Union[str, str], caminho_properties_no_war: str, caminho_properties: str):
+
+    logger.info("Inciando processo para adição do arquivo .properties padrão.")
     
     arquivo_war = os.path.abspath(caminho_war)
     arquivo_properties = os.path.abspath(caminho_properties)
 
     try:
         with zipfile.ZipFile(arquivo_war, 'a') as war_zip:
-            war_zip.write(arquivo_properties, arcname=caminho_no_war)
+            war_zip.write(arquivo_properties, arcname=caminho_properties_no_war)
 
         logger.info("Arquivo adicionado ao pacote .war com sucesso!")
 
@@ -339,8 +335,8 @@ async def adicionar_properties(caminho_war: Union[str, str], caminho_no_war: str
 
 async def copiar_war(caminho_war: str, destino: str):
     
-    arquivo_war = os.path.abspath(caminho_war) # pyright: ignore
-    arquivo_destino = os.path.abspath(destino) # pyright: ignore
+    arquivo_war = os.path.abspath(caminho_war) 
+    arquivo_destino = os.path.abspath(destino) 
 
     try:
 
@@ -357,7 +353,7 @@ async def copiar_war(caminho_war: str, destino: str):
                 logger.info(f"Diretorio destino: {diretorio_atual}")
                 processo = await asyncio.create_subprocess_shell(f'cp *.war {destino}', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
                 
-                resultado_processo = await processo.communicate() # pyright: ignore
+                resultado_processo = await processo.communicate() 
 
                 if processo.returncode == 0:
                     
@@ -378,7 +374,7 @@ async def copiar_war(caminho_war: str, destino: str):
 
 async def compactar_arquivo(caminho_diretorio: str, nome_arquivo: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
 
@@ -416,7 +412,7 @@ async def compactar_arquivo(caminho_diretorio: str, nome_arquivo: str):
                 
                     logger.error(f"{funcao_atual} - Erro ao executar compactação: {processo}")
 
-        elif os.path.exists("sigpwebfuncoes.war"):
+        if os.path.exists("sigpwebfuncoes.war"):
 
             logger.info(f"{funcao_atual} - arquivo sigpwebfuncoes.war encontrado")
 
@@ -460,7 +456,7 @@ async def compactar_arquivo(caminho_diretorio: str, nome_arquivo: str):
 
 async def disponibilizar_arquivo(caminho_arquivo: str, caminho_disponibilizar_arquivo: str, tipo: str):
 
-    funcao_atual = inspect.currentframe().f_code.co_name # pyright: ignore
+    funcao_atual = inspect.currentframe().f_code.co_name 
 
     try:
 
@@ -471,7 +467,7 @@ async def disponibilizar_arquivo(caminho_arquivo: str, caminho_disponibilizar_ar
         
         for arquivo in lista_arquivos:
             if arquivo.endswith(".rar"):
-                arquivos_rar.append(arquivo) # pyright: ignore
+                arquivos_rar.append(arquivo) 
         
         if arquivos_rar:
         

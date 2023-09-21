@@ -1,11 +1,11 @@
 {
     "pythonVersion": "3.8",
     "reportMissingImports": true,
-    "useLibraryCodeForTypes": true,
+    "useLibraryCodeForTypes": false,
     "include": ["**/*.py"],
     "exclude": ["**/__pycache__/*"],
     "pythonPath": ["."],
-    "typeCheckingMode": "strict",
+    "typeCheckingMode": "off",
     "extraPaths": ["./img"],
     "executionEnvironments": [
       {

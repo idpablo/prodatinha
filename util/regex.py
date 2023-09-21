@@ -5,7 +5,7 @@ import util.logger as logger
 
 logger = logger.setup_logger("regex.py", 'log/discord.log')
 
-arquivo_atual = inspect.currentframe().f_code.co_filename # pyright: ignore
+arquivo_atual = inspect.currentframe().f_code.co_filename 
 
 
 class ResultadoRegex:

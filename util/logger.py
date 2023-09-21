@@ -22,7 +22,7 @@ class LoggingFormatter(logging.Formatter):
         logging.CRITICAL: red + bold,
     }
 
-    def format(self, record): # pyright: ignore
+    def format(self, record): 
         log_color = self.COLORS[record.levelno]
         format = "(black){asctime}(reset) (levelcolor){levelname:<0}(reset) (green){name}(reset) {message}"
         format = format.replace("(black)", self.black + self.bold)
