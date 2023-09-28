@@ -11,6 +11,7 @@ import util.regex as regex
 import util.logger as logger
 import processamentos.deploy as deploy
 import processamentos.projeto as projeto
+import processamentos.conexao as conexao
 import processamentos.container as container
 
 from unidecode import unidecode
@@ -377,14 +378,20 @@ async def gerar_versao_funcoes(contexto):
                     
                     logger.info(f'Processo {processo_atual} foi concluido.')
 
+                    return True
+
                 else:
 
                     await contexto.send(f'ERROR - houve falha ao disponibilizar arquivo!') 
                     logger.info(f'falha no processo disponibilizar arquivo!')
 
+                    return False
+
             else:
 
-                        await contexto.send(f'Processo de compactação não foi realizado!') 
+                await contexto.send(f'Processo de compactação não foi realizado!') 
+
+                return False        
 
         else:
 
@@ -498,9 +505,13 @@ async def on_message(message):
                 if comando == 'executa-setup':
 
                     branch = partes[1] 
+                    servidor = partes[2]
+                    base = partes[3]  
                     
                     await message.channel.send('\nIniciando execução do setup na base indicada...')  
-                    await message.channel.send(f'Base:\n     └> {branch}') 
+                    await message.channel.send(f'Branch:\n     └> {branch}') 
+                    await message.channel.send(f'Servidor:\n     └> {servidor}') 
+                    await message.channel.send(f'Base:\n     └> {base}') 
                     
                     processo_checkout = await projeto.git_checkout(branch, diretorio_projeto) 
                     
@@ -508,6 +519,10 @@ async def on_message(message):
 
                         await message.channel.send(f'Branch Alterada:\n     └> **{branch}**\n\n') 
                         await message.channel.send(f'Sucesso na alteração da branch!\n     └> **{processo_checkout.stdout}**') 
+
+                        await message.invoke(gerar_versao_funcoes)
+
+                        conexao.definir_configuracoes_arquivo_properties(servidor, base)
 
                     elif processo_checkout.returncode == 1: 
                     

@@ -6,3 +6,4 @@ sigtomcat/sig/sig.war
 sigtomcat/sigpwebfuncoes/Funcao*
 sigtomcat/sigpwebfuncoes/sigpwebfuncoes.war
 resource/client_secret.json
+conexao/
