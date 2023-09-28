@@ -2,6 +2,7 @@ import unittest
 
 from processamentos.projeto import *
 from processamentos.container import *
+from processamentos.conexao import *
 from processamentos.deploy import *
 from gera_versao_local import *
 
@@ -70,6 +71,7 @@ class TestExecutarFuncoes(unittest.IsolatedAsyncioTestCase):
     async def test_executar_funcoes(self):
         resultado = await executar_curl('http://localhost:8080/sigpwebfuncoes/funcoes_setup.jsp')  
         self.assertTrue(resultado)
+    
     
 if __name__ == '__main__':
     unittest.main()

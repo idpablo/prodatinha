@@ -494,6 +494,25 @@ async def on_message(message):
                     
                         logger.error(f'{processo_checkout.stderr}') 
                         await message.channel.send(f'Falha ao alterar a branch - {processo_checkout.stderr}') 
+                
+                if comando == 'executa-setup':
+
+                    branch = partes[1] 
+                    
+                    await message.channel.send('\nIniciando execução do setup na base indicada...')  
+                    await message.channel.send(f'Base:\n     └> {branch}') 
+                    
+                    processo_checkout = await projeto.git_checkout(branch, diretorio_projeto) 
+                    
+                    if processo_checkout.returncode == 0: 
+
+                        await message.channel.send(f'Branch Alterada:\n     └> **{branch}**\n\n') 
+                        await message.channel.send(f'Sucesso na alteração da branch!\n     └> **{processo_checkout.stdout}**') 
+
+                    elif processo_checkout.returncode == 1: 
+                    
+                        logger.error(f'{processo_checkout.stderr}') 
+                        await message.channel.send(f'Falha ao alterar a branch - {processo_checkout.stderr}')
 
             except Exception as exception:
 

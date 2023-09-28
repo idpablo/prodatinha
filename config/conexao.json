@@ -1,0 +1,107 @@
+[
+    {
+        "name": "28",
+        "username" : "desenvolvimento",
+        "password": "rRTIbFMVvur3imIkRxTU",
+        "usernameReport": "desenvolvimento",
+        "passwordReport": "rRTIbFMVvur3imIkRxTU",
+        "bancos":[
+            {	"name": "sch_acreuna",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_acreuna"
+            },
+            {	"name": "sch_aguaslindas",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_aguaslindas"
+            },
+            {	"name": "sch_aguaslindas",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_aguaslindas"
+            },
+            {	"name": "sch_mineiros",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_mineiros"
+            },
+            {	"name": "sch_araguaina",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_araguaina"
+            },
+            {	"name": "sch_automacao",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_automacao"
+            },
+            {	"name": "sch_bi",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_bi"
+            },
+            {	"name": "sch_morrinhos",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_morrinhos"
+            },
+            {	"name": "sch_bomjesus",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_bomjesus"
+            },
+            {	"name": "sch_cambomjesus",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_cambomjesus"
+            },
+            {	"name": "sch_camgoianesia",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_camgoianesia"
+            },
+            {	"name": "sch_caminaciolandia",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_caminaciolandia"
+            },
+            {	"name": "sch_camluziania",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_camluziania"
+            },
+            {	"name": "sch_catalao",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_catalao"
+            },
+            {	"name": "sch_cmcaldas",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_cmcaldas"
+            },
+            {	"name": "sch_valparaiso",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_valparaiso"
+            },
+            {	"name": "sch_ipatinga",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_ipatinga"
+            },
+            {	"name": "sch_itapeva",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_itapeva"
+            },
+            {	"name": "sch_juti",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_juti"
+            },
+            {	"name": "sch_americano",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_americano"
+            },
+            {	"name": "sch_ipa",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_ipa"
+            },
+            {	"name": "sch_mobile",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_mobile"
+            },
+            {	"name": "sch_nazario",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_nazario"
+            },
+            {	"name": "sch_pirenopolis",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_pirenopolis"
+            },
+            {	"name": "sch_proc",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_proc"
+            },
+            {	"name": "sch_prodata",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_prodata"
+            },
+            {	"name": "sch_sanclerlandia",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_sanclerlandia"
+            },
+            {	"name": "sch_shelena",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_shelena"
+            },
+            {	"name": "sch_palmas",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_palmas"
+            },
+            {	"name": "sch_porto_nacional",
+                "url": "url=jdbc:postgresql://172.16.30.8:5432/sch_porto_nacional"
+            }
+        ]
+    },
+    {
+        "name": "29",
+        "bancos":[
+            
+        ]
+    }
+]
