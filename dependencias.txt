@@ -1,7 +1,7 @@
 psutil 
 docker
-discord.py
-zipfile
 pyright
-python-dotenv
 unittest
+unidecode
+discord.py
+python-dotenv
