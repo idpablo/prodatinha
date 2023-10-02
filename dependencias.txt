@@ -1,7 +1,6 @@
 psutil 
 docker
 pyright
-unittest
 unidecode
 discord.py
 python-dotenv
