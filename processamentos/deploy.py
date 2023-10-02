@@ -2,12 +2,10 @@ import re
 import asyncio
 import subprocess
 
-from bs4 import BeautifulSoup
-
 import util.logger as logger
 logger = logger.setup_logger('deploy.py')
 
-async def executar_curl(contexto, url):  
+async def executar_curl(url):  
    
     try:
 
@@ -55,11 +53,10 @@ async def executar_curl(contexto, url):
     
                             linha_log_body_funcoes.append(linha_sem_tag_html)
                             logger.info(f'{idx}: {linha_sem_tag_html}')
-                            await contexto.send(f'Informações sobre a base onde o funções está sendo executado:\n     └>{linha_sem_tag_html}')
                         
-                        # if linha_log_info_encontrada:
+                        if linha_log_info_encontrada:
                             
-                        #     logger.info(f'{idx}: {linha_sem_tag_html}')
+                            logger.info(f'{idx}: {linha_sem_tag_html}')
 
                         if linha_log_erros_encontrada:
                                     

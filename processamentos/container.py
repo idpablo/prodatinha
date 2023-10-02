@@ -21,6 +21,12 @@ def docker_buscar_container(container_nome: str):
     except docker.errors.NotFound as e: 
 
         logger.info(f"{funcao_atual} - O container '{container_nome}' não existe. - {e}")
+
+        return False
+
+    except Exception as exception:
+
+        logger.error(f'Erro inisperado - {exception}')
     
         return False
 
@@ -56,7 +62,7 @@ def docker_parar_container(container_nome: str):
 
         return False
 
-async def docker_criar_container(dockerfile_dir: str, container_nome: str):
+async def docker_criar_container(dockerfile_dir: str, container_nome: str, porta = 8080):
 
     funcao_atual = inspect.currentframe().f_code.co_name 
 
@@ -81,8 +87,8 @@ async def docker_criar_container(dockerfile_dir: str, container_nome: str):
         # Configurações do contêiner
         container_config = {
             'image': container_nome,
-            'ports': {8080:8080},
-            'name': 'sigpwebfuncoes',
+            'ports': {8080:porta},
+            'name': container_nome,
             'remove': True,
             'tty': True,
             'detach': True,

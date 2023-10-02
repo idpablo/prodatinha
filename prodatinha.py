@@ -50,6 +50,7 @@ diretorio_funcoes_war = os.getenv('DIRETORIO_FUNCOES_WAR')
 arquivo_sig_war = os.getenv('ARQUIVO_SIG_WAR')
 arquivo_funcoes_war = os.getenv('ARQUIVO_FUNCOES_WAR')
 caminho_properties_padrao = os.getenv('CAMINHO_PROPERTIES_TEMPLATE')
+caminho_properties_gerado = os.getenv('CAMINHO_PROPERTIES_TEMPLATE_GERADA')
 caminho_properties_sig = os.getenv('CAMINHO_PROPERTIES_SIG_WAR')
 caminho_properties_funcoes = os.getenv('CAMINHO_PROPERTIES_FUNCOES_WAR')
 caminho_criar_container_sig = os.getenv('CAMINHO_CRIAR_CONTAINER_SIG')
@@ -92,7 +93,19 @@ async def on_command_error(contexto, error):
     try:    
         if isinstance(error, commands.CommandNotFound): 
 
-            await contexto.send(f'Comando não encontrado.') 
+            comando = contexto.message.content
+
+            if '!executar-setup' in comando:
+                logger.info(f'Comando: {comando}');
+                return
+            
+            elif '!mudar-branch' in comando:
+                logger.info(f'Comando: {comando}')
+                return
+            else:
+
+                logger.info(f'Comando não encontrado.') 
+
         else:
             raise error
     
@@ -280,11 +293,11 @@ async def gerar_versao_funcoes(contexto):
             versao_atual, data_atual = await projeto.versao_atual_funcoes() 
             versao_atualizada, data_atualizada = await projeto.versionamento_funcoes()
 
-            await contexto.send(f"Versão atual: {versao_atual}\n     └> Versão que sera gerada: {versao_atualizada}") 
+            await contexto.send(f"Versão atual: {versao_atual}\n\t\t\t└>  Versão que sera gerada: {versao_atualizada}") 
 
-            await contexto.send(f"Data atual: {data_atual}\n     └> Data da versão que sera gerada: {data_atualizada}") 
+            await contexto.send(f"Data atual: {data_atual}\n\t\t\t└>  Data da versão que sera gerada: {data_atualizada}") 
 
-            await contexto.send(f"Iniciando Clean do repositorio...\n     └> Apagando as versões geradas anteriormente...") 
+            await contexto.send(f"Iniciando Clean do repositorio...\n\t\t\t└>  Apagando as versões geradas anteriormente...") 
             
             processando_clean = asyncio.create_task(projeto.gradle_clean())
             
@@ -294,7 +307,7 @@ async def gerar_versao_funcoes(contexto):
             
         if processo_clean.returncode == 0: 
             
-            await contexto.send(f"Processo 'gradle clean' executado com êxito!\nIniciando empacotamento da aplicação...\n     └> Gerando build do funções.") 
+            await contexto.send(f"Processo 'gradle clean' executado com êxito!\nIniciando empacotamento da aplicação...\n\t\t\t└>  Gerando build do funções.") 
 
             processando_war = asyncio.create_task(projeto.gradle_war())
 
@@ -357,12 +370,12 @@ async def gerar_versao_funcoes(contexto):
                 if processo_upload:
 
                     await contexto.send(f"Processo que disponibiliza arquivo finalizado!") 
-                    await contexto.send(f"Arquivo:\n     └> [**{nome_funcoes}.rar**](http://localhost:8220/sigpwebfuncoes/)\n") 
+                    await contexto.send(f"Arquivo:\n\t\t\t└> [**{nome_funcoes}.rar**](http://localhost:8220/sigpwebfuncoes/)\n") 
                     logger.info(f"Processo de upload realizado!") 
 
                     await status_bot(status="Arquivo disponibilizado!", estado='online')
 
-                    processando_deploy_funcoes = asyncio.create_task(deploy.executar_curl(contexto, 'http://localhost:8080/sigpwebfuncoes/funcoes_setup.jsp')) 
+                    processando_deploy_funcoes = asyncio.create_task(deploy.executar_curl('http://localhost:8080/sigpwebfuncoes/funcoes_setup.jsp')) 
 
                     await status_processamento(contexto, 'funções setup', processando_deploy_funcoes, 90) 
 
@@ -423,13 +436,19 @@ async def comandos(contexto):
                 └> Verifica branch atual!
         
            **!mudar-branch nome_da_branch**
-                └> Muda para a branch selecionada! (Exemplo: !mudar-branch master)
+                └> Muda para a branch selecionada! (Exemplo: **!mudar-branch master**)
         
            **!gerar-versao-sig**
                 └>  Gera versão da aplicação sig!
-        
+               
            **!gerar-versao-funcoes**
-                └> Gera versão da aplicação funções""" 
+                └> Gera versão da aplicação funções
+           
+           **!executar-setup "nome_da_branch" "nome_do_servidor" "nome_da_base"**
+                └>  Gera uma nova versão do funções a partir da branch indicada, 
+                       Executa setup no servidor e base indicados!
+                       (Exemplo: **!executar-setup master 28 sch_shelena)**
+    """ 
 
     await contexto.send(texto) 
 
@@ -456,8 +475,6 @@ async def status_task(contexto):
 async def sobre(contexto): 
     await contexto.send('Bot feito com a intenção de automatizar o build da aplicação SIG,\nCriação: 02/06/2023, \nCriado e mantido por: Pablo Soares!') 
 
-@bot.command(name='mudar-branch')
-
 @bot.event
 async def on_message(message): 
     
@@ -465,6 +482,7 @@ async def on_message(message):
 
     if message.author != bot.user: 
 
+        nome_usuario = message.author.name 
         conteudo = message.content 
 
         logger.info(f'Conteudo: {conteudo}')
@@ -475,7 +493,7 @@ async def on_message(message):
             comando = partes[0][len(config['prefix']):] 
 
             resposta = f"""
-            Bot online... \n    └> Processando comando: {comando} \n------------------------------------------------------------
+            Bot online...\n\t└>  Processando comando: {comando}\n\t\t\tRequerente: **{nome_usuario}**\n------------------------------------------------------------
             """
             await message.channel.send(resposta) 
 
@@ -485,62 +503,150 @@ async def on_message(message):
             
                 if comando == 'mudar-branch':
 
-                    branch = partes[1] 
+                    configuracoes = {
+                        'branch' : partes[1],  
+                    } 
+
+                    branch = configuracoes['branch']
                     
                     await message.channel.send('\nCheckout iniciado...')  
-                    await message.channel.send(f'Mudando para a branch:\n     └> {branch}') 
+                    await message.channel.send(f'Mudando para a branch:\n\t└> {branch}') 
                     
-                    processo_checkout = await projeto.git_checkout(branch, diretorio_projeto) 
+                    processando_checkout = asyncio.create_task(projeto.git_checkout(branch, diretorio_projeto))
+                    processo_checkout = await processando_checkout
                     
-                    if processo_checkout.returncode == 0: 
+                    if processo_checkout.returncode == 0:
 
-                        await message.channel.send(f'Branch Alterada:\n     └> **{branch}**\n\n') 
-                        await message.channel.send(f'Sucesso na alteração da branch!\n     └> **{processo_checkout.stdout}**') 
+                        await message.channel.send(f'Branch Alterada:\n\t└> **{branch}**\n\n') 
+                        await message.channel.send(f'Sucesso na alteração da branch!\n\t└> **{processo_checkout.stdout}**') 
 
-                    elif processo_checkout.returncode == 1: 
+                    else: 
                     
                         logger.error(f'{processo_checkout.stderr}') 
                         await message.channel.send(f'Falha ao alterar a branch - {processo_checkout.stderr}') 
                 
-                if comando == 'executa-setup':
+                elif comando == 'executar-setup':
 
-                    branch = partes[1] 
-                    servidor = partes[2]
-                    base = partes[3]  
-                    
-                    await message.channel.send('\nIniciando execução do setup na base indicada...')  
-                    await message.channel.send(f'Branch:\n     └> {branch}') 
-                    await message.channel.send(f'Servidor:\n     └> {servidor}') 
-                    await message.channel.send(f'Base:\n     └> {base}') 
-                    
-                    processo_checkout = await projeto.git_checkout(branch, diretorio_projeto) 
-                    
+                    configuracoes = {
+                        'branch' : partes[1],
+                        'servidor' :  partes[2],
+                        'base' : partes[3]    
+                    } 
+
+                    branch = configuracoes['branch']
+                    servidor = configuracoes['servidor']
+                    base = configuracoes['base']
+
+                    processo_checkout = await projeto.git_checkout(branch, diretorio_projeto)
+
                     if processo_checkout.returncode == 0: 
 
-                        await message.channel.send(f'Branch Alterada:\n     └> **{branch}**\n\n') 
-                        await message.channel.send(f'Sucesso na alteração da branch!\n     └> **{processo_checkout.stdout}**') 
+                            await message.channel.send(f'Branch Alterada:\n\t└> **{branch}**') 
+                            await message.channel.send(f'Sucesso na alteração da branch!\n\t└> **{processo_checkout.stdout}**') 
+                    
+                    ambiente = await projeto.configurar_ambiente(diretorio_projeto, diretorio_root_funcoes) 
 
-                        await message.invoke(gerar_versao_funcoes)
+                    await message.channel.send(f'\nIniciando execução do setup na base indicada...\n\t└>  Branch: {branch}\n\t\t\tServidor: {servidor}\n\t\t\tBase: {base}')
+            
+                    if ambiente:
 
-                        conexao.definir_configuracoes_arquivo_properties(servidor, base)
+                        await message.channel.send(f"Ambiente configurado!") 
+
+                        versao_atual, data_atual = await projeto.versao_atual_funcoes() 
+                        versao_atualizada, data_atualizada = await projeto.versionamento_funcoes()
+
+                        await message.channel.send(f"Versão atual: {versao_atual}\n\t\t\t└>  Versão que sera gerada: {versao_atualizada}") 
+                        await message.channel.send(f"Data atual: {data_atual}\n\t\t\t└>  Data da versão que sera gerada: {data_atualizada}")  
+                        await message.channel.send(f"Iniciando Clean do repositorio...\n\t└> Apagando as versões geradas anteriormente...") 
+            
+                        processando_clean = asyncio.create_task(projeto.gradle_clean())
+                        
+                        await status_processamento(contexto = None, processo_atual = 'de limpeza no repositorío do funções', procesamento = processando_clean, tempo = 3) 
+
+                        processo_clean = await processando_clean
+                        
+                        if processo_clean.returncode == 0: 
+                            
+                            await message.channel.send(f"Processo 'gradle clean' executado com êxito!\nIniciando empacotamento da aplicação...\n     └> Gerando build do funções.") 
+
+                            processando_war = asyncio.create_task(projeto.gradle_war())
+
+                            await status_processamento(contexto = None, processo_atual = 'gerando war', procesamento = processando_clean, tempo = 10) 
+
+                            resultado_war, processo_war = await processando_war 
+
+                        if processo_war.returncode == 0: 
+
+                            await conexao.definir_configuracoes_arquivo_properties(servidor, base)
+
+                            await status_bot("Build FUNCOES Finalizado!")
+
+                            await message.channel.send(f"Processo de build executado com êxito!") 
+                            await message.channel.send(f"Adicionando arquivo .properties!") 
+
+                            processando_adionar_properties = asyncio.create_task(projeto.adicionar_properties(arquivo_funcoes_war, caminho_properties_funcoes, caminho_properties_gerado)) 
+
+                            processo_properties = await processando_adionar_properties
+
+                        if processo_properties:
+
+                            porta = 8081 
+                            container_name = f'sigpwebfuncoes_{servidor}_{base}_{nome_usuario}'
+
+                            await message.channel.send(f"Processo que adiciona o arquivo .properties finalizado!") 
+                            logger.info(f"Processo que adiciona o arquivo .properties foi realizado!")
+
+                            await message.channel.send("Processando arquivos para criar o container docker de teste do funções!") 
+
+                            processo_copiar_war = await projeto.copiar_war(diretorio_funcoes_war, caminho_criar_container_funcoes) 
+
+                            if processo_copiar_war:
+
+                                await message.channel.send("Arquivo funções para criação do container copiado com êxito!") 
+
+                                processando_criar_container = asyncio.create_task(container.docker_criar_container(caminho_criar_container_funcoes, container_name, porta))
+
+                                await asyncio.sleep(60)
+
+                            if processando_criar_container:
+
+                                processando_deploy_funcoes = asyncio.create_task(deploy.executar_curl(f'http://localhost:{porta}/sigpwebfuncoes/funcoes_setup.jsp')) 
+
+                                await status_processamento(message.channel, processo_atual = 'funções setup', procesamento = processando_clean, tempo = 30) 
+
+                                processo_deploy_funcoes = await processando_deploy_funcoes
+
+                                if processo_deploy_funcoes:
+
+                                    await message.channel.send(f'Execução  funções setup finalizado!')
+
+                                    for linha in processo_deploy_funcoes:
+
+                                        await message.channel.send(f'{linha}')
 
                     elif processo_checkout.returncode == 1: 
                     
                         logger.error(f'{processo_checkout.stderr}') 
                         await message.channel.send(f'Falha ao alterar a branch - {processo_checkout.stderr}')
 
+                    else:
+                        
+                        pass
+
             except Exception as exception:
 
-                logger.error(f'{processo_atual} - {exception}')
+                logger.error(f'{processo_atual} - {exception}') 
         
     await bot.process_commands(message) 
 
-async def status_processamento(contexto, processo_atual, procesamento, tempo): 
+async def status_processamento(contexto=None, processo_atual=None, procesamento=None, tempo=None): 
     
     while not procesamento.done(): 
             processo_atual_sem_acentos = unidecode(processo_atual)
             logger.info(f'Executando o processo {processo_atual_sem_acentos}...') 
-            await contexto.send(f'Executando o processo {processo_atual}...') 
+            
+            if contexto is not None : await contexto.send(f'Executando o processo {processo_atual}...') 
+            
             await asyncio.sleep(tempo) 
 
 async def status_bot(status=None, estado=None) -> None: 

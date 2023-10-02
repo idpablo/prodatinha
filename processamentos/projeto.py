@@ -12,7 +12,7 @@ from typing import Union
 
 logger = logger.setup_logger("projeto.py", 'log/discord.log')  
 
-caminho_versao_sig = "/opt/docker/repo/sig/sig/WebContent/version.json"
+caminho_versao_sig = r"/opt/docker/repo/sig/sig/WebContent/version.json"
 caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
 async def git_checkout(branch: str, diretorio_projeto: str): 
@@ -33,22 +33,23 @@ async def git_checkout(branch: str, diretorio_projeto: str):
 
             logger.info(f"Stash: {processo_git_stash.stdout}")
 
-            processo_git_checkout_master = subprocess.run(['bash', '-c', f'git checkout master'], capture_output=True)
+            # processo_git_checkout_master = subprocess.run(['bash', '-c', f'git checkout master'], capture_output=True)
 
-            resultado_pull = subprocess.run(['bash', '-c', 'git pull'], capture_output=True, text=True)
+            # resultado_pull = subprocess.run(['bash', '-c', 'git pull'], capture_output=True, text=True)
 
-            logger.info(f"Mudando para master: {processo_git_checkout_master.stdout}")
-            logger.info(f"Atualizando repositorio local com a origin -> master: {resultado_pull.stdout}")
+            logger.info(f"Mudando para master: {processo_git_stash.stdout}")
+            logger.info(f"Atualizando repositorio local com a origin -> master")
         
-            if processo_git_checkout_master.returncode == 0 and resultado_pull.returncode == 0:
+            # if processo_git_checkout_master.returncode == 0 and resultado_pull.returncode == 0:
+            # if processo_git_checkout_master.returncode == 0 and resultado_pull.returncode == 0:
         
-                processo_git_checkout = subprocess.run(['bash', '-c', f'git checkout {branch}'], capture_output=True)
+            processo_git_checkout = subprocess.run(['bash', '-c', f'git checkout {branch}'], capture_output=True)
 
-                if processo_git_checkout.returncode == 0:
-                    
-                    logger.info(f"Branch: {processo_git_checkout.stdout}")
+            if processo_git_checkout.returncode == 0:
+                
+                logger.info(f"Branch: {processo_git_checkout.stdout}")
 
-                    return processo_git_checkout
+                return processo_git_checkout
     
     except Exception as exeption:
         

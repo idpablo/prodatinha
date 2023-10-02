@@ -108,5 +108,17 @@
         "bancos":[
             
         ]
+    },
+    {
+        "name": "local",
+        "username" : "postgres",
+        "password": "prodata",
+        "usernameReport": "postgres",
+        "passwordReport": "prodata",
+        "bancos":[
+            {	"name_base": "sch",
+                "url": "url=jdbc:postgresql://172.17.0.1:5432/sch"
+            }
+        ]
     }
 ]

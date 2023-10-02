@@ -2,6 +2,6 @@ psutil
 docker
 discord
 zipfile
+pyright
 python-dotenv
 unittest
-unidecode
