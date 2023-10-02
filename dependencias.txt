@@ -1,6 +1,6 @@
 psutil 
 docker
-discord
+discord.py
 zipfile
 pyright
 python-dotenv
