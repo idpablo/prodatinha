@@ -12,8 +12,8 @@ from typing import Union
 
 logger = logger.setup_logger("projeto.py", 'log/discord.log')  
 
-caminho_versao_sig = r"/opt/docker/repo/sig/sig/WebContent/version.json"
-caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
+caminho_versao_sig = r"/repo/sig/sig/WebContent/version.json"
+caminho_versao_sigpwebfuncoes = r"/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
 async def git_checkout(branch: str, diretorio_projeto: str): 
     
@@ -202,7 +202,7 @@ async def versao_atual_funcoes():
 async def versionamento_funcoes():
 
     funcao_atual = inspect.currentframe().f_code.co_name 
-    caminho_versao_sigpwebfuncoes = r"/opt/docker/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
+    caminho_versao_sigpwebfuncoes = r"/repo/sig/sigpwebfuncoes/src/servico/setup/VersaoSigpWebFuncoes.java"
 
     try:
 

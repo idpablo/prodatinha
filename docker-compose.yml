@@ -5,4 +5,4 @@ services:
       context: .
     volumes:
       - /repo/:/repo/:rw
-    command: python3 /repo/prodatinha/prodatinha.py
+    command: ["./repo/prodatinha/configuracao_servidor.sh"]
