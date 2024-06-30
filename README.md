@@ -1,5 +1,5 @@
-# prodatinha
- Bot criado para automatizar o build da aplicação SIG - Prodata, e mais...
+# Bot Python Discord
+ Bot criado para automatizar o build da aplicação Java e mais...
  
 ## Sobre
 
@@ -45,19 +45,19 @@ pm2 monit
 ### Reiniciar aplicação
 
 ```bash
-pm2 restart prodatinha
+pm2 restart bot_python_discord
 ```
 
 ### Parar aplicação
 
 ```bash
-pm2 stop prodatinha
+pm2 stop bot_python_discord
 ```
 
 ### logs
 
 ```bash
-pm2 logs prodatinha
+pm2 logs bot_python_discord
 ```
 
 # Melhorias
